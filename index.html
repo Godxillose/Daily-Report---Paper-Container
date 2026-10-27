@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Transport Report — Monthly Control Tower</title>
+<style>
+:root{--navy:#102d5b;--blue:#1768d8;--green:#0aa85b;--red:#e63946;--bg:#f4f7fb;--line:#dfe5ee;--muted:#6d7a90}
+*{box-sizing:border-box}html{overflow-x:hidden}body{margin:0;background:var(--bg);font-family:Arial,"Noto Sans Thai",sans-serif;color:#14284c;overflow-x:hidden}
+button,input,select{font:inherit}button{cursor:pointer}
+.app{display:flex;min-height:100vh}.side{width:235px;flex:0 0 235px;background:var(--navy);color:#fff;position:fixed;inset:0 auto 0 0;padding:22px 14px;z-index:20}.brand{font-size:22px;font-weight:800;padding:4px 12px 24px}.brand small{display:block;font-size:11px;font-weight:400;opacity:.7;margin-top:4px}.nav button{display:block;width:100%;border:0;background:transparent;color:#dbe7f8;text-align:left;padding:12px 14px;border-radius:9px;margin:5px 0}.nav button.active,.nav button:hover{background:#1768d8;color:#fff}.online{position:absolute;left:14px;right:14px;bottom:16px;background:#163a70;border-radius:10px;padding:12px;font-size:12px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:5px}
+.main{margin-left:235px;width:calc(100% - 235px);min-width:0;padding:22px 25px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:16px}.head h1{margin:0;font-size:26px}.head p{margin:5px 0 0;color:var(--muted)}.controls{display:flex;gap:8px;flex-wrap:wrap}.controls select,.controls input{border:1px solid #d4dce8;background:#fff;padding:9px 11px;border-radius:8px;max-width:100%}.filterGroup{display:flex;align-items:center;gap:6px}.filterGroup label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}.btn{border:0;background:var(--blue);color:#fff;font-weight:700;border-radius:8px;padding:9px 14px}.btn.gray{background:#e8eef7;color:#17365f}.btn:disabled{opacity:.7;cursor:wait}.refreshOverlay{position:fixed;inset:0;background:rgba(244,247,251,.58);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .16s ease,visibility .16s ease}.refreshOverlay.show{opacity:1;visibility:visible;pointer-events:auto}.refreshBox{min-width:170px;padding:18px 22px;border:1px solid #dfe5ee;border-radius:14px;background:#fff;box-shadow:0 8px 28px #102d5b18;text-align:center;color:#17365f;font-size:12px;font-weight:700}.refreshSpinner{width:34px;height:34px;margin:0 auto 10px;border:4px solid #dfe8f5;border-top-color:#1768d8;border-radius:50%;animation:refreshSpin .72s linear infinite;will-change:transform}@keyframes refreshSpin{to{transform:rotate(360deg)}}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 2px 8px #102d5b0b}.card{padding:14px}.label{font-size:12px;color:var(--muted)}.num{font-size:27px;font-weight:800;margin-top:5px}.sub{font-size:11px;color:#8490a2;margin-top:3px}
+.panel{padding:15px;margin-bottom:14px}.panel h2{font-size:16px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr;gap:14px}.legend{display:flex;gap:16px;font-size:12px;color:#68768c;margin-bottom:7px}.lg{display:inline-block;width:9px;height:9px;margin-right:4px}.lplan{background:#1e3764}.lactual{background:#0aa85b}.lpending{background:#e63946}
+.chart{height:280px;display:flex;align-items:flex-end;gap:2px;padding:28px 6px 38px;border-bottom:1px solid #ccd5e2;overflow-x:auto;overflow-y:visible;min-width:0}.day{height:100%;flex:1;min-width:30px;display:flex;align-items:flex-end;justify-content:center;gap:2px;position:relative}.barwrap{height:100%;width:18px;display:flex;align-items:center;justify-content:flex-end;flex-direction:column;position:relative}.barwrap.stacked{display:block;position:relative}.col{width:18px;min-height:0;border-radius:3px 3px 0 0}.cplan{background:#1e3764}.cactual{background:#0aa85b}.cpending{background:#e63946}.daynum{position:absolute;bottom:-18px;font-size:9px;color:#66748b}.dlabel{position:absolute;bottom:calc(100% + 3px);font-size:8px;font-weight:800;line-height:1;background:#fff;padding:2px 4px;border:1px solid currentColor;border-radius:3px;white-space:nowrap;left:50%;transform:translateX(-50%);pointer-events:none;z-index:2;box-shadow:0 1px 2px #102d5b12}.barwrap.stacked .col{position:absolute;left:0;bottom:0;border-radius:0}.barwrap.stacked .cactual{bottom:0;border-radius:0 0 3px 3px}.barwrap.stacked .cpending{bottom:var(--actual-height,0%);border-radius:3px 3px 0 0}.barwrap.stacked .planlabel{color:#1e3764;bottom:calc(var(--total-height,0%) + 3px)}.barwrap.stacked .actuallabel{color:#0aa85b;border-color:#0aa85b;background:#fff;bottom:var(--actual-center,50%);transform:translate(-50%,50%)}.barwrap.stacked .pendinglabel{color:#e63946;border-color:#e63946;background:#fff;bottom:var(--pending-center,50%);transform:translate(-50%,50%)}.date-label{position:absolute;bottom:-28px;font-size:9px;color:#66748b;white-space:nowrap;left:50%;transform:translateX(-50%)}
+.prevsvg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1}.prevsvg line{stroke:#f08c00;stroke-width:1.6;stroke-dasharray:4 3;opacity:.75}.prevdot{position:absolute;left:50%;width:5px;height:5px;margin:0 0 -2.5px -2.5px;border-radius:50%;background:#f08c00;opacity:.75;pointer-events:none;z-index:1}.prevlbl{position:absolute;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;line-height:1;color:#f08c00;opacity:.6;white-space:nowrap;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff;pointer-events:none;z-index:1}.lgavg{display:inline-block;width:14px;height:0;border-top:2px dashed;vertical-align:middle;margin-right:4px}
+.fleetCharts{display:grid;grid-template-columns:1fr;gap:14px}.fleetChartCard{min-width:0;padding:13px;border:1px solid var(--line);border-radius:10px;background:#fff}.fleetChartCard h3{margin:0 0 7px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fleetChartLegend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:7px;font-size:10px;color:#68768c}.fleetChartLegend .lg{width:8px;height:8px}.fleetChartWrap{overflow-x:auto;overflow-y:hidden;padding-bottom:2px}.fleetChart{height:265px;min-width:2050px;display:flex;align-items:stretch;gap:8px;padding:28px 12px 30px;border-bottom:1px solid #ccd5e2}.fday{height:100%;min-width:62px;flex:1;display:flex;align-items:flex-end;justify-content:center;gap:9px;position:relative}.fbarbox{height:100%;width:16px;display:flex;align-items:flex-end;justify-content:center;position:relative}.fbar{width:10px;min-height:0;border-radius:3px 3px 0 0}.fplan{background:#1e3764}.factual{background:#0aa85b}.fpending{background:#e63946}.flabel{position:absolute;bottom:calc(100% + 2px);font-size:8px;font-weight:800;line-height:1;background:#fff;padding:2px 4px;border:1px solid currentColor;border-radius:3px;white-space:nowrap;left:50%;bottom:50%;transform:translate(-50%,50%);z-index:2;box-shadow:0 1px 2px #102d5b12}.fbarbox:nth-child(1) .flabel{color:#1e3764}.fbarbox:nth-child(2) .flabel{color:#0aa85b}.fbarbox:nth-child(3) .flabel{color:#e63946}.fbarbox:has(.fpending) .flabel{color:#e63946}.fdate{position:absolute;bottom:-22px;font-size:8px;color:#66748b;white-space:nowrap;left:50%;transform:translateX(-50%)}.chartNote{font-size:10px;color:#7a879a;margin-top:6px}
+.rate{display:flex;align-items:center;gap:18px}.donutWrap{position:relative;width:125px;height:125px;flex:0 0 125px}.donutWrap svg{display:block}.ringtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--navy)}.ratebox{font-size:13px;line-height:1.8}
+.tablewrap{overflow:auto;max-height:570px}.matrix{border-collapse:separate;border-spacing:0;min-width:1450px;width:100%;font-size:11px}.matrix th,.matrix td{border-right:1px solid #dce3ec;border-bottom:1px solid #dce3ec;padding:4px 3px;text-align:center;white-space:nowrap}.matrix th{position:sticky;top:0;background:#173b76;color:#fff;z-index:4}.matrix th:first-child,.matrix td:first-child{position:sticky;left:0;z-index:5}.matrix td:first-child{background:#fff;text-align:left;font-weight:700}.matrix th:first-child{background:#173b76}.matrix .metric{font-weight:700;text-align:left!important;background:#f7f9fc!important}.matrix input{width:45px;border:1px solid #d4dce8;border-radius:4px;padding:4px 2px;text-align:center;background:#fff}.matrix input:focus{outline:2px solid #1768d8}.matrix .total{background:#f0f5fb;font-weight:800}.fleetbar{background:#edf3fb;font-weight:800;text-align:left!important;padding:7px!important}
+.matrix td.clusterbar{background:#d7e6fb;color:var(--navy);font-weight:800;text-align:left!important;padding:9px 7px!important;font-size:12px;letter-spacing:.3px}.matrix .pending input{color:var(--red)}.savebar{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)}
+.users{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.user{border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px}.user b{display:block;margin-bottom:4px}.green{color:#087b42}
+
+/* Fleet Network Map */
+.fleetmap{position:relative;min-height:500px;overflow:hidden;background:linear-gradient(135deg,#f7fbff,#eef5fb);border:1px solid var(--line);border-radius:12px}
+.mapgrid{position:absolute;inset:0;background-image:linear-gradient(#dbe7f3 1px,transparent 1px),linear-gradient(90deg,#dbe7f3 1px,transparent 1px);background-size:45px 45px;opacity:.45}
+.thailand{position:absolute;left:18%;top:3%;width:64%;height:94%;opacity:.13}
+.maplabel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:900;letter-spacing:8px;color:#68809d;opacity:.22;pointer-events:none}
+.fmarker{position:absolute;transform:translate(-50%,-50%);z-index:3}
+.fdot{width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px #102d5b44;display:block;margin:auto;transition:.18s}
+.fmarker:hover .fdot{transform:scale(1.35)}
+.fname{display:none;position:absolute;left:50%;top:20px;transform:translateX(-50%);background:#102d5b;color:#fff;padding:5px 8px;border-radius:6px;font-size:10px;white-space:nowrap;box-shadow:0 3px 10px #102d5b33}
+.fmarker:hover .fname{display:block}
+.maplegend{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.clusterpill{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 10px;font-size:11px;cursor:pointer}.clusterpill b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.maplayout{display:grid;grid-template-columns:1fr 285px;gap:14px}.fleetinfo{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px;max-height:500px;overflow:auto}.fleetinfo h3{margin:0 0 5px;font-size:14px}.fleetinfo p{margin:0 0 10px;font-size:11px;color:var(--muted)}.frow{padding:8px;border-bottom:1px solid #edf1f5;font-size:11px;cursor:pointer}.frow:hover{background:#f5f8fc}.frow b{display:block}.fstats{display:flex;gap:8px;margin-top:4px;color:var(--muted)}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.users{grid-template-columns:1fr 1fr}.fleetCharts{grid-template-columns:1fr}}
+@media(max-width:900px){.maplayout{grid-template-columns:1fr}.fleetmap{min-height:440px}.fleetinfo{max-height:300px}}
+@media(max-width:700px){.side{position:static;width:100%;flex:none;height:auto}.app{display:block}.main{margin:0;width:100%;padding:14px;min-width:0}.online{position:static;margin-top:15px}.kpis{grid-template-columns:1fr 1fr}.head{display:block}.controls{margin-top:10px}.controls select,.controls input,.controls .btn{max-width:100%;min-width:0}.panel{width:100%;overflow:hidden}.fleetChartCard{padding:10px}.fleetCharts{gap:10px}}
+
+.loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#102d5b,#1768d8);display:flex;align-items:center;justify-content:center;z-index:20000;padding:20px}.loginCard{width:min(420px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 18px 60px #071a3b55}.loginBrand{text-align:center;margin-bottom:22px}.loginBrand h1{margin:0;color:#102d5b;font-size:24px}.loginBrand p{margin:6px 0 0;color:#6d7a90;font-size:12px}.loginField{margin-bottom:13px}.loginField label{display:block;font-size:12px;font-weight:700;color:#17365f;margin-bottom:6px}.loginField input{width:100%;border:1px solid #d4dce8;background:#fff;padding:11px 12px;border-radius:8px;outline:none}.loginField input:focus{border-color:#1768d8;box-shadow:0 0 0 3px #1768d81a}.loginBtn{width:100%;border:0;background:#1768d8;color:#fff;font-weight:700;border-radius:8px;padding:11px 14px}.loginBtn:disabled{opacity:.7;cursor:wait}.loginError{min-height:18px;margin:9px 0 0;color:#e63946;font-size:12px;text-align:center;font-weight:700}.userBar{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:#17365f}.userBadge{background:#e8eef7;border-radius:20px;padding:7px 10px;font-weight:700}.logoutBtn{border:0;background:#fff;color:#b42318;border:1px solid #f0c5c1;border-radius:7px;padding:7px 10px;font-size:11px;font-weight:700}.hiddenApp{display:none!important}.rememberRow{display:flex;align-items:center;gap:7px;margin:-2px 0 13px;font-size:12px;color:#6d7a90}.rememberRow input{width:15px;height:15px;margin:0;accent-color:#1768d8}.rememberRow label{cursor:pointer}
+
+/* AI Summary (ตารางเดียว) */
+.aiPanel{background:linear-gradient(135deg,#f3f8ff,#fff);border-color:#cfe0fb}
+.aiTop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.aiSeg{display:inline-flex;background:#e8eff9;border-radius:9px;padding:3px}.aiSeg button{border:0;background:transparent;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:700;color:#4a5d7c;transition:background .2s,color .2s}.aiSeg button.on{background:#1768d8;color:#fff;box-shadow:0 2px 6px #1768d855}
+.aiSel{border:1px solid #d4dce8;background:#fff;padding:8px 11px;border-radius:8px;font-size:13px}
+.aiNote{font-size:11px;color:#6d7a90;margin:0 0 10px;line-height:1.6}
+.aiWrap{overflow:auto;max-height:680px;border:1px solid #dce3ec;border-radius:10px;background:#fff}
+.aiTbl{border-collapse:separate;border-spacing:0;width:100%;min-width:1260px;font-size:12px}
+.aiTbl th{position:sticky;top:0;z-index:4;background:#173b76;color:#fff;padding:8px 6px;text-align:center;font-size:11.5px;border-right:1px solid #2a4f8f;white-space:nowrap}
+.aiTbl thead tr.r2 th{top:33px;background:#1f4a8f}
+.aiTbl td{padding:7px 6px;border-right:1px solid #e3e9f1;border-bottom:1px solid #e3e9f1;text-align:center;white-space:nowrap;vertical-align:middle}
+.aiTbl th.aiFleet,.aiTbl td.aiFleet{position:sticky;left:0;z-index:5;text-align:left;min-width:170px;background:#fff;font-weight:700}
+.aiTbl th.aiFleet{background:#173b76;z-index:6}
+.aiTbl td.aiCluster{background:#d7e6fb;color:var(--navy);font-weight:800;text-align:left;font-size:12px;padding:8px 8px}
+.aiTbl td.aiCluster .stk{position:sticky;left:8px;display:inline-block}
+.aiTbl tr.aiTotal td{background:#eef4fd;font-weight:800;border-bottom:2px solid #9db9e3}.aiTbl tr.aiTotal td.aiFleet{background:#eef4fd}
+.aiTbl td.aiTxt{white-space:normal;text-align:left;min-width:300px;font-size:11.5px;line-height:1.55;color:#34496d}
+.aiTbl td.aiTxt div{margin-bottom:2px}
+.aiBadge{display:inline-block;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:12px;white-space:nowrap}
+.aiTbl td.sep,.aiTbl th.sep{border-left:2px solid #c3d3ea}
+.aiRt{display:inline-block;min-width:54px;font-weight:800}
+.aiRtBar{height:4px;border-radius:3px;background:#edf1f5;margin-top:3px;overflow:hidden}.aiRtBar i{display:block;height:100%}
+
+/* Sidebar: slide เข้า-ออกอัตโนมัติ (ย่อเหลือแถบไอคอน, เอาเมาส์ชี้แล้วขยายออก) */
+:root{--sideMin:56px;--sideMax:235px}
+.side{position:fixed;top:0;bottom:0;left:0;height:100vh;height:100dvh;width:var(--sideMin);flex:0 0 var(--sideMin);overflow:hidden;white-space:nowrap;transition:width .4s cubic-bezier(.22,.61,.36,1) .12s,box-shadow .4s ease .12s;will-change:width;backface-visibility:hidden;transform:translateZ(0)}
+.side>*{width:calc(var(--sideMax) - 28px)}
+.side:hover,.side.open{width:var(--sideMax);transition-delay:0s;box-shadow:8px 0 30px #071a3b55}
+.side::before{content:"☰";position:absolute;left:21px;top:20px;font-size:20px;opacity:1;transition:opacity .2s ease .12s;pointer-events:none}
+.side:hover::before,.side.open::before{opacity:0;transition-delay:0s}
+.brand{opacity:0;transition:opacity .22s ease;margin-top:0}
+.side:hover .brand,.side.open .brand{opacity:1;transition-delay:.1s}
+.nav{max-height:calc(100vh - 200px);max-height:calc(100dvh - 200px);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;margin-top:34px}.nav::-webkit-scrollbar{display:none}
+.side:hover .nav,.side.open .nav{margin-top:0}
+.nav button{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.nav .ni{flex:0 0 22px;text-align:center;font-size:16px}
+.nav .nt{opacity:0;transition:opacity .2s ease}
+.side:hover .nav .nt,.side.open .nav .nt{opacity:1;transition-delay:.12s}
+.online{position:absolute;left:14px;right:auto;bottom:16px;margin-top:0;opacity:0;transition:opacity .2s ease}
+.side:hover .online,.side.open .online{opacity:1;transition-delay:.12s}
+.main{margin-left:var(--sideMin);width:calc(100% - var(--sideMin))}
+
+/* ตาราง Daily Report: ชื่อ Fleet / Cluster เลื่อนตามเวลาเลื่อนขวา */
+.matrix td.fleetbar,.matrix td.clusterbar{position:static}
+.matrix .stk{position:sticky;left:8px;display:inline-block;z-index:6}
+
+/* Monthly Input: ช่องที่ยังไม่ได้บันทึก */
+.matrix input.dirty{background:#fff6cc;border-color:#f2b705}
+
+/* Manage Fleet */
+.fgroup{margin:12px 0 0}.fgroup>b{font-size:13px}.fgroup>b span{font-weight:400;color:#6d7a90;font-size:12px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.fchip{background:#eef4fd;border:1px solid #d3e0f3;border-radius:16px;padding:4px 10px;font-size:12px}.fchip.new{background:#e6f7ee;border-color:#b6e5cc}.fchip i{font-style:normal;font-size:10px;font-weight:800;color:#087b42;margin-left:3px}
+
+/* AI Summary: เปรียบเทียบเดือนก่อน vs เดือนล่าสุด */
+.aiTbl td.aiCl{background:#d7e6fb;font-weight:800;color:var(--navy)}
+.aiTbl td.aiCl.aiFleet{background:#d7e6fb}
+.aiTbl td.aiFl{padding-left:20px}
+.aiTags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;justify-content:center}
+.aiTag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:#f1f4f8;color:#4a5d7c;white-space:nowrap}
+.aiGrid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px;margin-top:14px}
+.aiBox{background:#fff;border:1px solid #dce3ec;border-radius:10px;padding:12px 14px;min-width:0}
+.aiBox h3{margin:0 0 8px;font-size:13px;color:var(--navy)}
+.aiRk{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed #e3e9f1;font-size:12px}.aiRk:last-child{border-bottom:0}
+.aiRkN{flex:0 0 24px;height:24px;border-radius:50%;font-weight:800;font-size:12px;text-align:center;line-height:24px}
+.aiRkM{flex:1;min-width:0}.aiRkM b{display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aiRkM span{color:#6d7a90;font-size:11px}
+.aiRkD{font-size:15px;font-weight:800;white-space:nowrap}
+.aiChk{padding:6px 0;border-bottom:1px dashed #e3e9f1;font-size:12px;line-height:1.5}.aiChk:last-child{border-bottom:0}.aiChk span{color:#6d7a90;font-size:11px}
+.aiEmpty{font-size:12px;color:#7a879a;padding:6px 0}
+.pendingAuditWrap{max-height:340px;overflow:auto;border:1px solid #dce3ec;border-radius:8px;margin-top:8px;background:#fff}.pendingAuditTbl{border-collapse:separate;border-spacing:0;width:100%;min-width:760px;table-layout:fixed;font-size:11px}.pendingAuditTbl th:nth-child(1),.pendingAuditTbl td:nth-child(1){width:15%}.pendingAuditTbl th:nth-child(2),.pendingAuditTbl td:nth-child(2){width:14%}.pendingAuditTbl th:nth-child(3),.pendingAuditTbl td:nth-child(3){width:18%;text-align:center}.pendingAuditTbl th:nth-child(4),.pendingAuditTbl td:nth-child(4){width:7%;text-align:center}.pendingAuditTbl th:nth-child(5),.pendingAuditTbl td:nth-child(5){width:9%;text-align:center}.pendingAuditTbl th:nth-child(6),.pendingAuditTbl td:nth-child(6){width:37%}.pendingAuditTbl th{position:sticky;top:0;background:#173b76;color:#fff;padding:8px 7px;text-align:left;white-space:nowrap;z-index:2}.pendingAuditTbl td{padding:7px;border-bottom:1px solid #e3e9f1;vertical-align:top}.pendingAuditTbl th:nth-child(3),.pendingAuditTbl th:nth-child(4),.pendingAuditTbl th:nth-child(5),.pendingAuditTbl td:nth-child(3),.pendingAuditTbl td:nth-child(4),.pendingAuditTbl td:nth-child(5){text-align:center;font-variant-numeric:tabular-nums}.pendingAuditTbl .pendingNum{font-weight:800;color:#c42632}.pendingAuditNote{font-size:10.5px;color:#6d7a90;margin-top:7px;line-height:1.55}
+.aiChart{background:#fff;border:1px solid #dce3ec;border-radius:10px;padding:10px 12px;margin-top:14px}
+.aiChart h3{margin:0 0 4px;font-size:13px;color:var(--navy)}
+.aiBars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}.aiBars>.aiChart{margin-top:0;min-width:0}
+@media(max-width:900px){.aiBars{grid-template-columns:1fr}}
+.aiChart .scr{overflow-x:auto}.aiChart svg{display:block;width:100%;min-width:760px;height:auto}
+.aiLg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#4a5d7c;margin:2px 0 4px}.aiLg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+
+.filterHint{font-size:12px;color:#b86e00;font-weight:700;align-self:center}
+.btn.needApply{background:#1768d8;color:#fff;box-shadow:0 0 0 3px #1768d833;animation:needPulse 1.4s ease-in-out infinite}
+@keyframes needPulse{50%{box-shadow:0 0 0 7px #1768d800}}
+/* Animation กราฟ: เล่นเฉพาะตอนโหลด/กดดูข้อมูล/สลับมุมมอง (ใช้ transform + opacity เพื่อให้ลื่น) */
+#rateArc{transition:stroke-dasharray .9s cubic-bezier(.22,.61,.36,1)}
+.aiHb{transition:opacity .2s ease}.aiHb:hover{opacity:.82}
+.barwrap.stacked .col{transition:filter .2s ease}.barwrap.stacked .col:hover{filter:brightness(1.12)}
+@media (prefers-reduced-motion:no-preference){
+@keyframes growY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes revealX{from{clip-path:inset(-10px 100% -10px -10px)}to{clip-path:inset(-10px -10px -10px -10px)}}
+.chartAnim .barwrap.stacked .col{transform-origin:50% 100%;animation:growY .75s cubic-bezier(.22,.61,.36,1) both;animation-delay:calc(var(--i,0)*14ms)}
+.chartAnim .barwrap.stacked .dlabel{animation:fadeIn .5s ease both;animation-delay:calc(var(--i,0)*14ms + 380ms)}
+.chartAnim .prevsvg line,.chartAnim .prevdot,.chartAnim .prevlbl{animation:fadeIn .7s ease both;animation-delay:.45s}
+.chartAnim .aiHb{transform-box:fill-box;transform-origin:0 50%;animation:growX .8s cubic-bezier(.22,.61,.36,1) both;animation-delay:calc(var(--i,0)*45ms)}
+.chartAnim .aiHbl{animation:fadeIn .5s ease both;animation-delay:calc(var(--i,0)*45ms + 420ms)}
+.chartAnim .aiLnG{animation:revealX 1.1s cubic-bezier(.22,.61,.36,1) both}.chartAnim .aiLnG+.aiLnG{animation-delay:.2s}
+.chartAnim .aiChart,.chartAnim .fleetChartCard,.chartAnim .aiBox{animation:cardIn .55s cubic-bezier(.22,.61,.36,1) both}
+}
+/* Delete Fleet (เฉพาะ Owner) */
+.fchip .fdel{border:0;background:#fde7e9;color:#c42632;border-radius:50%;width:18px;height:18px;line-height:18px;padding:0;margin-left:7px;font-size:11px;font-weight:800;cursor:pointer;transition:background .15s,transform .15s}.fchip .fdel:hover{background:#c42632;color:#fff;transform:scale(1.1)}
+.fchip.del{background:#f4f6f9;border-color:#dde3ec;color:#6d7a90;text-decoration:line-through;text-decoration-color:#b0bac8}.fchip.del .frest{border:0;background:#e6f7ee;color:#087b42;border-radius:10px;padding:2px 8px;margin-left:7px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}.fchip.del .frest:hover{background:#087b42;color:#fff}
+.fnote{font-size:11.5px;color:#7a879a;margin-top:12px}
+</style>
+</head>
+<body>
+<div id="loginScreen" class="loginScreen" aria-label="Login">
+  <div class="loginCard">
+    <div class="loginBrand"><h1>Daily Transport Report</h1><p>MONTHLY CONTROL TOWER</p></div>
+    <form id="loginForm" onsubmit="return handleLogin(event)">
+      <div class="loginField"><label for="loginUser">Username</label><input id="loginUser" type="text" autocomplete="username" required autofocus></div>
+      <div class="loginField"><label for="loginPass">Password</label><input id="loginPass" type="password" autocomplete="current-password" required></div>
+      <div class="rememberRow"><input id="rememberLogin" type="checkbox"><label for="rememberLogin">จำ Username และ Password</label></div>
+      <button id="loginBtn" class="loginBtn" type="submit">เข้าสู่ระบบ</button>
+      <div id="loginError" class="loginError"></div>
+    </form>
+  </div>
+</div>
+<div id="refreshOverlay" class="refreshOverlay" aria-hidden="true"><div class="refreshBox"><div class="refreshSpinner"></div><div id="refreshOverlayText">กำลังโหลดข้อมูล...</div></div></div>
+<div id="app" class="app hiddenApp">
+<aside class="side">
+<div class="brand">Daily Transport<small>MONTHLY CONTROL TOWER</small></div>
+<div class="nav">
+<button class="active" onclick="scrollToId('dashboard',this)"><span class="ni">📊</span><span class="nt">Dashboard</span></button>
+<button onclick="scrollToId('matrix',this)"><span class="ni">📝</span><span class="nt">Monthly Input</span></button>
+<button onclick="scrollToId('fleets',this)"><span class="ni">➕</span><span class="nt">Manage Fleet</span></button>
+<button onclick="scrollToId('users',this)"><span class="ni">👥</span><span class="nt">Users / Fleet</span></button>
+</div>
+<div class="online"><span class="dot"></span><b>Online</b><br><span id="last">อัปเดตล่าสุด —</span></div>
+</aside>
+
+<main class="main">
+<section id="dashboard">
+<div class="head">
+<div><h1>Daily Transport Report</h1><p>กรอกข้อมูลรายวัน แต่แสดงภาพรวมทั้งเดือนเพื่อดู Trend วันต่อวัน</p></div>
+<div class="controls"><div class="userBar"><span class="userBadge">👤 <span id="currentUser">-</span></span><button class="logoutBtn" type="button" onclick="logout()">ออกจากระบบ</button></div><div class="filterGroup"><label for="year">Year</label><select id="year"></select></div><div class="filterGroup"><label for="month">Month</label><select id="month"></select></div><div class="filterGroup"><label for="viewFleet">Fleet</label><select id="viewFleet"><option value="ALL">ทุก Fleet</option></select></div><div class="filterGroup"><label for="customerFilter">Customer</label><select id="customerFilter"><option value="ALL">ลูกค้า: แสดงทั้งหมด</option><option value="SCG">ลูกค้า: SCG</option><option value="NONSCG">ลูกค้า: non SCG</option></select></div><button id="refreshBtn" class="btn gray" onclick="refreshDashboard()">🔎 ดูข้อมูล</button><button id="exportExcelBtn" class="btn gray" onclick="exportExcel()">📥 Export Excel</button><span id="filterHint" class="filterHint"></span></div>
+</div>
+
+<div class="kpis">
+<div class="card"><div class="label">PLAN TOTAL</div><div class="num" id="kp">0</div><div class="sub">Trips ทั้งเดือน</div></div>
+<div class="card"><div class="label">ACTUAL TOTAL</div><div class="num" id="ka">0</div><div class="sub">Trips ที่ตอบสนองได้</div></div>
+<div class="card"><div class="label">PENDING TOTAL</div><div class="num" id="kq">0</div><div class="sub">Trips ที่ยังไม่ตอบสนอง</div></div>
+<div class="card"><div class="label">RESPONSE RATE</div><div class="num" id="kr">0%</div><div class="sub">Actual ÷ Plan</div></div>
+<div class="card"><div class="label">FLEET WITH DATA</div><div class="num" id="kf">0/24</div><div class="sub">Fleet ที่มีข้อมูลในเดือนนี้</div></div>
+</div>
+
+<div class="grid">
+<div class="panel"><h2>Daily Trend — Plan vs Actual vs Pending</h2><div class="legend"><span><i class="lg lplan"></i>Plan</span><span><i class="lg lactual"></i>Actual</span><span><i class="lg lpending"></i>Pending</span><span><i class="lgavg" style="border-color:#f08c00"></i>Plan เดือนที่แล้ว</span></div><div class="chart" id="chart"></div></div>
+<div class="panel aiPanel"><h2>✨ Fleet Transport Performance Analysis (วิเคราะห์ประสิทธิภาพการขนส่งอัตโนมัติ)</h2><div id="aiSummary"></div></div>
+<div class="panel"><h2>Monthly Response Rate</h2><div class="rate"><div class="donutWrap"><svg viewBox="0 0 140 140" width="125" height="125"><circle cx="70" cy="70" r="58" fill="none" stroke="#edf1f5" stroke-width="16"></circle><circle id="rateArc" cx="70" cy="70" r="58" fill="none" stroke="#0aa85b" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 364.4" transform="rotate(-90 70 70)"></circle></svg><span class="ringtext" id="ringText">0%</span></div><div class="ratebox"><b>Actual / Plan</b><br>Plan <b id="rp">0</b> Trips<br>Actual <b id="ra">0</b> Trips<br>Pending <b id="rq">0</b> Trips</div></div></div>
+</div>
+
+
+
+<div class="panel"><h2>Cluster Overview — Plan vs Actual vs Pending</h2><div class="fleetCharts" id="clusterCharts"></div></div>
+
+<div class="panel tablewrap"><h2>Daily Report - Plan (Trips) / Actual (Trip)</h2><div id="summaryTable"></div></div>
+</section>
+
+<section id="matrix" style="margin-top:20px">
+<div class="panel">
+<h2>Monthly Input — กรอกข้อมูลรายวันในตารางเดียว</h2>
+<div class="controls"><div class="filterGroup"><label for="inputYear">ปี</label><select id="inputYear"></select></div><div class="filterGroup"><label for="inputMonth">เดือน</label><select id="inputMonth"></select></div><select id="inputFleet"></select><button id="saveMatrixBtn" class="btn" onclick="saveMatrix()">💾 บันทึกข้อมูล</button></div>
+<div style="font-size:12px;color:#6d7a90;margin:9px 0">ผู้ใช้ Admin สามารถดูและแก้ไขข้อมูลได้ทุก Fleet</div>
+<div class="tablewrap" style="max-height:500px"><div id="matrixTable"></div></div>
+<div class="savebar"><span>ระบบคำนวณ Pending จาก Plan − Actual หากไม่ได้ระบุค่าเอง</span><b id="saveStatus"></b></div>
+</div>
+</section>
+
+<section id="fleets" style="margin-top:20px">
+<div class="panel">
+<h2>➕ Manage Fleet — เพิ่ม Fleet ใหม่</h2>
+<div class="controls"><input id="newFleetName" type="text" maxlength="60" placeholder="ชื่อ Fleet ใหม่ เช่น TCNW นครสวรรค์" style="min-width:270px" onkeydown="if(event.key==='Enter')addFleet()"><select id="newFleetCluster"></select><button class="btn" onclick="addFleet()">➕ เพิ่ม Fleet</button></div>
+<div id="fleetAddStatus" style="font-size:12px;color:#6d7a90;margin:9px 0">เลือก Cluster ที่ Fleet นี้สังกัด แล้วกดเพิ่ม Fleet จะแสดงในทุกเมนูและตารางทันที (ห้ามใช้อักขระ . # $ [ ] / ในชื่อ)</div>
+<div id="fleetList"></div>
+</div>
+</section>
+
+<section id="users" style="margin-top:20px">
+<div class="panel"><h2>ผู้ใช้งาน / Fleet ที่รับผิดชอบ</h2><div class="users" id="usersBox"></div></div>
+</section>
+</main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const LOGIN_USER="admin";
+const LOGIN_PASSWORD="admin123";
+/* ผู้ใช้ที่มีสิทธิ์ลบ Fleet (Owner) — เปลี่ยน Username/Password ได้ที่ 2 บรรทัดนี้ */
+const LOGIN_OWNER_USER="owner";
+const LOGIN_OWNER_PASSWORD="Owner@2026";
+const LOGIN_SESSION_KEY="daily_transport_report_login";
+const LOGIN_REMEMBER_KEY="daily_transport_report_remember";
+function showApp(){
+  const login=document.getElementById("loginScreen"),app=document.getElementById("app"),u=document.getElementById("currentUser");
+  if(login)login.style.display="none";
+  if(app)app.classList.remove("hiddenApp");
+  if(u)u.textContent=sessionStorage.getItem(LOGIN_SESSION_KEY)==="owner"?LOGIN_OWNER_USER:LOGIN_USER;
+}
+function showLogin(){
+  const login=document.getElementById("loginScreen"),app=document.getElementById("app");
+  if(login)login.style.display="flex";
+  if(app)app.classList.add("hiddenApp");
+}
+function loadRememberedLogin(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(LOGIN_REMEMBER_KEY)||"null");
+    if(saved&&(saved.username===LOGIN_USER||saved.username===LOGIN_OWNER_USER)){
+      const u=document.getElementById("loginUser"),p=document.getElementById("loginPass"),r=document.getElementById("rememberLogin");
+      if(u)u.value=saved.username;
+      if(p)p.value=saved.password||"";
+      if(r)r.checked=true;
+    }
+  }catch(e){localStorage.removeItem(LOGIN_REMEMBER_KEY)}
+}
+function handleLogin(e){
+  if(e)e.preventDefault();
+  const u=document.getElementById("loginUser")?.value.trim()||"",p=document.getElementById("loginPass")?.value||"",err=document.getElementById("loginError"),btn=document.getElementById("loginBtn"),remember=document.getElementById("rememberLogin")?.checked;
+  const isAdmin=u===LOGIN_USER&&p===LOGIN_PASSWORD,isOwner=u===LOGIN_OWNER_USER&&p===LOGIN_OWNER_PASSWORD;
+  if(isAdmin||isOwner){
+    sessionStorage.setItem(LOGIN_SESSION_KEY,isOwner?"owner":"1");
+    if(remember)localStorage.setItem(LOGIN_REMEMBER_KEY,JSON.stringify({username:u,password:p}));
+    else localStorage.removeItem(LOGIN_REMEMBER_KEY);
+    if(err)err.textContent="";
+    if(btn)btn.disabled=true;
+    showApp();
+    if(typeof renderFleetList==="function"){renderFleetList();chartAnimWindow(1800);render()}
+  }else{
+    if(err)err.textContent="Username หรือ Password ไม่ถูกต้อง";
+    const pass=document.getElementById("loginPass");
+    if(pass){pass.value="";pass.focus();}
+  }
+  return false;
+}
+function logout(){
+  sessionStorage.removeItem(LOGIN_SESSION_KEY);
+  const form=document.getElementById("loginForm");
+  if(form)form.reset();
+  loadRememberedLogin();
+  const btn=document.getElementById("loginBtn");
+  if(btn)btn.disabled=false;
+  showLogin();
+  setTimeout(()=>document.getElementById("loginUser")?.focus(),50);
+}
+function checkLogin(){
+  loadRememberedLogin();
+  {const sv=sessionStorage.getItem(LOGIN_SESSION_KEY);if(sv==="1"||sv==="owner")showApp();else showLogin()}
+}
+const FLEET_GROUPS={
+  "Central Cluster (ภาคกลาง)":["TCSP สมุทรปราการ","TWN ตะวันนา","OCSS สวนส้ม","OCON อ้อมน้อย","OCNP นครปฐม","P-Pack SS สินสาคร","P-Pack AM อัมพวา","P-Pack RY ระยอง","Precision สมุทรสาคร"],
+  "West Cluster (ตะวันตก)":["TCRB ราชบุรี"],
+  "East Cluster (ตะวันออก)":["TCRY ระยอง","TCCB ชลบุรี","TCPB ปราจีนบุรี"],
+  "Regional Cluster (ภูมิภาค)":["TCNK นวนคร","TCPT ปทุมธานี","TCSB สระบุรี","TCKP กำแพงเพชร","TCKK ขอนแก่น","TCS สงขลา","HUB เชียงใหม่ (กล่อง)","HUB เชียงใหม่ (A4)","HUB สุราษฎร์","warehouse HUB หาดใหญ่","คลังโนนสมบูรณ์ ขอนแก่น"]
+};
+const NON_SCG_FLEETS=["Chaisith ชัยสิทธิ์บรรจุภัณฑ์","STP สยามทับพัน","Panasonic","Sensient"];
+const FLEETS=Object.values(FLEET_GROUPS).flat().concat(NON_SCG_FLEETS);
+function customerOf(f){return NON_SCG_FLEETS.includes(f)?"NONSCG":"SCG";}
+const FLEET_META={
+"TCSP สมุทรปราการ":[76,30],"TWN ตะวันนา":[68,35],"OCSS สวนส้ม":[63,39],"OCON อ้อมน้อย":[59,39],"OCNP นครปฐม":[55,40],
+"P-Pack SS สินสาคร":[56,45],"P-Pack AM อัมพวา":[48,49],"P-Pack RY ระยอง":[70,54],"Precision สมุทรสาคร":[52,43],
+"TCRB ราชบุรี":[43,42],"TCRY ระยอง":[70,55],"TCCB ชลบุรี":[72,48],"TCPB ปราจีนบุรี":[78,40],
+"TCNK นวนคร":[67,27],"TCPT ปทุมธานี":[65,31],"TCSB สระบุรี":[65,22],"TCKP กำแพงเพชร":[53,8],"TCKK ขอนแก่น":[79,19],
+"TCS สงขลา":[82,83],"HUB เชียงใหม่ (กล่อง)":[39,1],"HUB เชียงใหม่ (A4)":[42,3],"HUB สุราษฎร์":[53,67],"warehouse HUB หาดใหญ่":[80,88],
+"คลังโนนสมบูรณ์ ขอนแก่น":[82,22],
+"Chaisith ชัยสิทธิ์บรรจุภัณฑ์":[74,33],"STP สยามทับพัน":[71,37],"Panasonic":[66,34],"Sensient":[69,40]
+};
+const CLUSTER_META={
+"Central Cluster (ภาคกลาง)":["#1768d8","ภาคกลาง"],"West Cluster (ตะวันตก)":["#7c3aed","ตะวันตก"],
+"East Cluster (ตะวันออก)":["#ea580c","ตะวันออก"],"Regional Cluster (ภูมิภาค)":["#0aa85b","ภูมิภาค"]
+};
+const KEY="daily_transport_report_monthly_v3";
+// Realtime database settings: Firebase Realtime Database
+const firebaseConfig={
+  apiKey:"AIzaSyDSEZXhJobU1_DEhmnWjmbXxFbSBPEWbJM",
+  authDomain:"daily-report---paper-container.firebaseapp.com",
+  projectId:"daily-report---paper-container",
+  storageBucket:"daily-report---paper-container.firebasestorage.app",
+  messagingSenderId:"1076304861970",
+  appId:"1:1076304861970:web:5358b2d956ff50e64731cb",
+  measurementId:"G-0NN898XZ1G",
+  databaseURL:"https://daily-report---paper-container-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+const firebaseApp=(window.firebase)?window.firebase.initializeApp(firebaseConfig):null;
+const dbRef=firebaseApp?window.firebase.database().ref("daily_transport_report"):null;
+function fbKey(date,fleet){return date+"__"+encodeURIComponent(fleet);}
+let db=[];
+
+function mergeDb(rows){
+  db=Array.isArray(rows)?rows.map(x=>({...x})):[]; 
+}
+async function loadRealtimeData(){
+  if(!dbRef){
+    const saved=localStorage.getItem(KEY);
+    db=saved?JSON.parse(saved):[];
+    render();
+    renderMatrix();
+    return;
+  }
+  try{
+    const snap=await dbRef.once("value");
+    mergeDb(Object.values(snap.val()||{}));
+  }catch(error){
+    console.error("โหลดข้อมูล Realtime ไม่สำเร็จ:",error);
+    saveStatus.textContent="เชื่อมต่อฐานข้อมูลไม่สำเร็จ";
+    return;
+  }
+  render();
+  renderMatrix();
+}
+function subscribeRealtime(){
+  if(!dbRef)return;
+  dbRef.on("value",snap=>{
+    mergeDb(Object.values(snap.val()||{}));
+    render();
+    renderMatrix();
+    last.textContent="อัปเดตล่าสุด "+new Date().toLocaleString("th-TH");
+  },error=>{
+    console.error("เชื่อมต่อ Realtime ล้มเหลว:",error);
+    saveStatus.textContent="เชื่อมต่อฐานข้อมูลไม่สำเร็จ";
+  });
+}
+const now=new Date(), curYear=now.getFullYear(), curMonth=String(now.getMonth()+1).padStart(2,"0");
+const MONTH_NAMES=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+function days(ym){let [y,m]=ym.split("-").map(Number);return new Date(y,m,0).getDate()}
+function selectedYM(yearId,monthId){return `${document.getElementById(yearId).value}-${document.getElementById(monthId).value}`}
+function fillYearSelect(id){const s=document.getElementById(id);if(!s)return;s.innerHTML="";for(let y=2569;y<=2589;y++){let o=document.createElement("option");o.value=String(y-543);o.textContent=String(y);if(y===curYear+543)o.selected=true;s.appendChild(o)}}
+function fillMonthSelect(id){const s=document.getElementById(id);if(!s)return;s.innerHTML="";MONTH_NAMES.forEach((name,i)=>{let o=document.createElement("option");o.value=String(i+1).padStart(2,"0");o.textContent=name;if(String(i+1).padStart(2,"0")===curMonth)o.selected=true;s.appendChild(o)})}
+function syncInputPeriod(){const y=document.getElementById("year"),m=document.getElementById("month"),iy=document.getElementById("inputYear"),im=document.getElementById("inputMonth");if(y&&iy)iy.value=y.value;if(m&&im)im.value=m.value}
+function setup(){
+ fillYearSelect("year");fillMonthSelect("month");fillYearSelect("inputYear");fillMonthSelect("inputMonth");
+ ["viewFleet"].forEach(id=>FLEETS.forEach(f=>{let o=document.createElement("option");o.value=f;o.textContent=f;document.getElementById(id).appendChild(o)}));
+ let inf=document.getElementById("inputFleet");FLEETS.forEach(f=>{let o=document.createElement("option");o.value=f;o.textContent=f;inf.appendChild(o)});
+ document.getElementById("year").onchange=()=>{syncInputPeriod();render();renderMatrix()};document.getElementById("month").onchange=()=>{syncInputPeriod();render();renderMatrix()};document.getElementById("viewFleet").onchange=render;document.getElementById("customerFilter").onchange=render;document.getElementById("inputYear").onchange=renderMatrix;document.getElementById("inputMonth").onchange=renderMatrix;document.getElementById("inputFleet").onchange=renderMatrix;
+ renderUsers();renderMap();renderMatrix();render();
+ loadRealtimeData().then(subscribeRealtime);
+}
+function rowsFor(ym){let n=days(ym), fs=document.getElementById("viewFleet").value, cf=document.getElementById("customerFilter")?document.getElementById("customerFilter").value:"ALL";return db.filter(x=>x.date.startsWith(ym)&&(+x.date.slice(-2)<=n)&&(fs==="ALL"||x.fleet===fs)&&(cf==="ALL"||customerOf(x.fleet)===cf)&&FLEETS.includes(x.fleet))}
+function sum(rows,k){return rows.reduce((a,x)=>a+(+x[k]||0),0)}
+function prevYM(ym){let [y,m]=ym.split("-").map(Number);m--;if(m<1){m=12;y--}return y+"-"+String(m).padStart(2,"0")}
+function prevPlanByDay(ym,prow){
+ const n=days(ym),pn=days(prevYM(ym));
+ return Array.from({length:n},(_,i)=>{if(i+1>pn)return null;const dd=String(i+1).padStart(2,"0");return sum(prow.filter(x=>x.date.endsWith(dd)),"plan")||null});
+}
+function prevLineCell(vals,i,max){
+ const v=vals[i];if(!v)return "";
+ let j=i-1;while(j>=0&&!vals[j])j--;
+ const y=x=>100-x/max*88,b=v/max*88;
+ const seg=j>=0?`<svg class="prevsvg" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${50-100*(i-j)}" y1="${y(vals[j])}" x2="50" y2="${y(v)}" vector-effect="non-scaling-stroke"></line></svg>`:"";
+ return seg+`<i class="prevdot" style="bottom:${b}%"></i><span class="prevlbl" style="bottom:calc(${b}% + 5px)">${v.toLocaleString()}</span>`;
+}
+/* สถิติ Plan ของ Fleet: High = สูงสุด, Low/Avg = ไม่นับค่า 0 และวันอาทิตย์ */
+function planStats(fr,ym){
+ const [y,m]=ym.split("-").map(Number);
+ let high=0,tot=0,cnt=0,low=null;
+ fr.forEach(x=>{const p=+x.plan||0;if(p>high)high=p;const d=+x.date.slice(-2);if(p>0&&new Date(y,m-1,d).getDay()!==0){tot+=p;cnt++;if(low===null||p<low)low=p}});
+ return {high,low,avg:cnt?tot/cnt:null,cnt};
+}
+/* วันที่ไม่นำมาคิดค่าเฉลี่ย: วันอาทิตย์ + วันหยุดนักขัตฤกษ์ตามรายการ */
+const HOLIDAYS_MD=new Set(["01-01","01-02","03-03","04-06","04-13","04-14","04-15","05-01","05-04","05-13","06-01","06-03","07-28","07-29","07-30","08-12","10-13","10-23","12-07","12-10","12-31"]);
+function nonWorkDays(ym){
+ const n=days(ym),[y,m]=ym.split("-").map(Number),out=new Set();
+ for(let d=1;d<=n;d++){
+  if(new Date(y,m-1,d).getDay()===0||HOLIDAYS_MD.has(ym.slice(5)+"-"+String(d).padStart(2,"0")))out.add(d);
+ }
+ return out;
+}
+/* เส้นปะ "Plan เดือนที่แล้ว" = ค่าเฉลี่ย Plan รายวันของเดือนที่แล้ว (ไม่นับวันอาทิตย์ และวันหยุดที่ไม่มี Plan) */
+function prevPlanAvgByDay(ym,prow){
+ const n=days(ym),pym=prevYM(ym),[py,pm]=pym.split("-").map(Number),pn=days(pym),NW=nonWorkDays(pym);
+ let tot=0,cnt=0;
+ for(let d=1;d<=pn;d++){
+  if(NW.has(d))continue;
+  const dd=String(d).padStart(2,"0"),p=sum(prow.filter(x=>x.date.endsWith(dd)),"plan");
+  if(p>0){tot+=p;cnt++}
+ }
+ const avg=cnt?Math.round(tot/cnt):null;
+ return Array.from({length:n},()=>avg);
+}
+function prevAvgCell(vals,i,max){
+ const v=vals[i];if(!v)return "";
+ const y=100-v/max*88,b=v/max*88,last=i===vals.length-1;
+ const seg=i>0?`<svg class="prevsvg" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="-50" y1="${y}" x2="50" y2="${y}" vector-effect="non-scaling-stroke"></line></svg>`:"";
+ return seg+(last?`<i class="prevdot" style="bottom:${b}%"></i><span class="prevlbl" style="bottom:calc(${b}% + 5px);left:auto;right:0;transform:none;opacity:1;font-size:9px">${v.toLocaleString()}</span>`:"");
+}
+function render(){
+ const ym=selectedYM("year","month"), rows=rowsFor(ym), P=sum(rows,"plan"),A=sum(rows,"actual"),Q=sum(rows,"pending"),rate=P?A/P*100:0;
+ kp.textContent=P.toLocaleString();ka.textContent=A.toLocaleString();kq.textContent=Q.toLocaleString();kr.textContent=Math.round(rate)+"%";
+ kf.textContent=new Set(rows.filter(x=>x.plan||x.actual||x.pending).map(x=>x.fleet)).size+"/"+FLEETS.length;rp.textContent=P.toLocaleString();ra.textContent=A.toLocaleString();rq.textContent=Q.toLocaleString();ringText.textContent=Math.round(rate)+"%";
+ const rateArcEl=document.getElementById("rateArc");if(rateArcEl){const circ=364.4,fill=Math.max(0,Math.min(100,rate))/100*circ;rateArcEl.setAttribute("stroke-dasharray",fill.toFixed(1)+" "+circ);}
+ const pPlan=prevPlanAvgByDay(ym,rowsFor(prevYM(ym)));
+ let max=Math.max(...Array.from({length:days(ym)},(_,i)=>{let d=String(i+1).padStart(2,"0"),r=rows.filter(x=>x.date.endsWith(d));return Math.max(sum(r,"plan"),sum(r,"actual")+sum(r,"pending"))}),1,...pPlan.map(v=>v||0));
+ chart.innerHTML=Array.from({length:days(ym)},(_,i)=>{let d=String(i+1).padStart(2,"0"),r=rows.filter(x=>x.date.endsWith(d));let p=sum(r,"plan"),a=sum(r,"actual"),q=sum(r,"pending");let ha=a?Math.max(1,a/max*88):0,hq=q?Math.max(1,q/max*88):0;let totalH=ha+hq,actualCenter=ha/2,pendingCenter=ha+(hq/2);let dateLabel=new Date(ym+"-"+d).toLocaleDateString("th-TH",{day:"2-digit",month:"short"});return `<div class="day"><div class="barwrap stacked" style="--actual-center:${actualCenter}%;--pending-center:${pendingCenter}%;--actual-height:${ha}%;--pending-height:${hq}%;--total-height:${totalH}%"><i class="col cpending" style="height:${hq}%"></i><i class="col cactual" style="height:${ha}%"></i>${p>0?`<span class="dlabel planlabel">${p.toLocaleString()}</span>`:""}${a>0?`<span class="dlabel actuallabel">${a.toLocaleString()}</span>`:""}${q>0?`<span class="dlabel pendinglabel">${q.toLocaleString()}</span>`:""}</div>${prevAvgCell(pPlan,i,max)}<span class="date-label">${dateLabel}</span></div>` }).join("");
+ let fs=document.getElementById("viewFleet").value==="ALL"?FLEETS:[document.getElementById("viewFleet").value];
+ const custFilter=document.getElementById("customerFilter")?document.getElementById("customerFilter").value:"ALL";
+ fs=fs.filter(f=>custFilter==="ALL"||customerOf(f)===custFilter);
+ let groups=Object.keys(FLEET_GROUPS).map(c=>[c,FLEET_GROUPS[c].filter(f=>fs.includes(f))]).filter(g=>g[1].length);
+ let nsMembers=NON_SCG_FLEETS.filter(f=>fs.includes(f));
+ if(nsMembers.length)groups.push(["non SCG",nsMembers]);
+ summaryTable.innerHTML=`<table class="matrix"><thead><tr><th>Fleet / Metric</th>${Array.from({length:days(ym)},(_,i)=>`<th>${i+1}</th>`).join("")}<th>Total</th><th>High</th><th>Low</th><th>Avg.</th></tr></thead><tbody>`+groups.map(([cname,members])=>`<tr><td class="clusterbar" colspan="${days(ym)+5}"><span class="stk">${cname}</span></td></tr>`+members.map(f=>{
+  let fr=rows.filter(x=>x.fleet===f);
+  return `<tr><td class="fleetbar" colspan="${days(ym)+5}"><span class="stk">${f}</span></td>`+["plan","actual","pending"].map(m=>`<tr><td class="metric">${m==="plan"?"Plan (Trips)":m==="actual"?"Actual (Trips)":"Pending (Trips)"}</td>${Array.from({length:days(ym)},(_,i)=>{let r=fr.find(x=>x.date.endsWith(String(i+1).padStart(2,"0")));return `<td>${r?(r[m]||0):"-"}</td>`}).join("")}<td class="total">${sum(fr,m)}</td><td>${m==="plan"?Math.max(...fr.map(x=>+x.plan||0),0):"-"}</td><td>${m==="plan"&&planStats(fr,ym).low!=null?planStats(fr,ym).low:"-"}</td><td>${m==="plan"&&planStats(fr,ym).avg!=null?Math.round(planStats(fr,ym).avg):"-"}</td></tr>`).join("")+`</tr>`
+ }).join("")).join("")+"</tbody></table>";
+ renderClusterCharts();renderAISummary();
+ last.textContent="อัปเดตล่าสุด "+new Date().toLocaleString("th-TH");
+}
+const CLUSTER_CHART_GROUPS=[
+ {label:"Central Cluster & West Cluster",customer:"SCG",fleets:[...FLEET_GROUPS["Central Cluster (ภาคกลาง)"],...FLEET_GROUPS["West Cluster (ตะวันตก)"]],colors:{plan:"#1e3764",actual:"#0aa85b",pending:"#e63946"}},
+ {label:"East Cluster",customer:"SCG",fleets:FLEET_GROUPS["East Cluster (ตะวันออก)"],colors:{plan:"#1e3764",actual:"#0aa85b",pending:"#e63946"}},
+ {label:"Regional Cluster",customer:"SCG",fleets:FLEET_GROUPS["Regional Cluster (ภูมิภาค)"],colors:{plan:"#1e3764",actual:"#0aa85b",pending:"#e63946"}},
+ {label:"non SCG",customer:"NONSCG",fleets:NON_SCG_FLEETS,colors:{plan:"#1e3764",actual:"#0aa85b",pending:"#e63946"}}
+];
+function renderClusterCharts(){
+  const container=document.getElementById("clusterCharts");
+  if(!container)return;
+  const ym=selectedYM("year","month"), n=days(ym);
+  const cf=document.getElementById("customerFilter")?document.getElementById("customerFilter").value:"ALL";
+  const vf=document.getElementById("viewFleet")?document.getElementById("viewFleet").value:"ALL";
+  const groups=CLUSTER_CHART_GROUPS.filter(g=>g.fleets.length&&(cf==="ALL"||g.customer===cf)&&(vf==="ALL"||g.fleets.includes(vf)));
+  container.innerHTML=groups.map(g=>{
+    const shownFleets=vf==="ALL"?g.fleets:g.fleets.filter(f=>f===vf);
+    const title=vf==="ALL"?g.label:vf;
+    const fr=db.filter(x=>x.date.startsWith(ym)&&shownFleets.includes(x.fleet));
+    const pPlan=prevPlanAvgByDay(ym,db.filter(x=>x.date.startsWith(prevYM(ym))&&shownFleets.includes(x.fleet)));
+    const max=Math.max(...Array.from({length:n},(_,i)=>{const d=String(i+1).padStart(2,"0"),r=fr.filter(x=>x.date.endsWith(d));return Math.max(sum(r,"plan"),sum(r,"actual")+sum(r,"pending"));}),1,...pPlan.map(v=>v||0));
+    return `<div class="fleetChartCard"><h3 title="${title}">${title}</h3><div class="fleetChartLegend"><span><i class="lg" style="background:${g.colors.plan}"></i>Plan</span><span><i class="lg" style="background:${g.colors.actual}"></i>Actual</span><span><i class="lg" style="background:${g.colors.pending}"></i>Pending</span><span><i class="lgavg" style="border-color:#f08c00"></i>Plan เดือนที่แล้ว</span></div><div class="chart">${Array.from({length:n},(_,i)=>{
+      const d=String(i+1).padStart(2,"0"),r=fr.filter(x=>x.date.endsWith(d)),p=sum(r,"plan"),a=sum(r,"actual"),q=sum(r,"pending");
+      const ha=a?Math.max(1,a/max*88):0,hq=q?Math.max(1,q/max*88):0;const totalH=ha+hq,actualCenter=ha/2,pendingCenter=ha+(hq/2);
+      const dateLabel=new Date(ym+"-"+d).toLocaleDateString("th-TH",{day:"2-digit",month:"short"});
+      return `<div class="day"><div class="barwrap stacked" style="--actual-center:${actualCenter}%;--pending-center:${pendingCenter}%;--actual-height:${ha}%;--pending-height:${hq}%;--total-height:${totalH}%"><i class="col cpending" style="height:${hq}%;background:${g.colors.pending}"></i><i class="col cactual" style="height:${ha}%;background:${g.colors.actual}"></i>${p>0?`<span class="dlabel planlabel" style="color:${g.colors.plan}">${p.toLocaleString()}</span>`:""}${a>0?`<span class="dlabel actuallabel">${a.toLocaleString()}</span>`:""}${q>0?`<span class="dlabel pendinglabel">${q.toLocaleString()}</span>`:""}</div>${prevAvgCell(pPlan,i,max)}<span class="date-label">${dateLabel}</span></div>`;
+    }).join("")}</div></div>`;
+  }).join("");
+}
+
+/* ===== Pending audit helpers: สาเหตุเป็นการประเมินจาก Plan / Actual / Pending ===== */
+function pendingAmount(row){
+ if(row.pending!==undefined&&row.pending!==null&&row.pending!=="")return Math.max(0,+row.pending||0);
+ return Math.max(0,(+row.plan||0)-(+row.actual||0));
+}
+function pendingReason(row,q){
+ const p=+row.plan||0,a=+row.actual||0,gap=Math.max(0,p-a);
+ if(p===0&&a===0)return "มี Pending แต่ไม่มี Plan/Actual บันทึก ควรตรวจสอบข้อมูล";
+ if(q===gap&&gap>0)return `Actual ต่ำกว่า Plan (${p.toLocaleString()} − ${a.toLocaleString()} = ${gap.toLocaleString()} เที่ยว)`;
+ if(gap===0)return `มี Pending ${q.toLocaleString()} เที่ยว แต่ส่วนต่าง Plan − Actual เท่ากับ 0 ควรตรวจสอบการบันทึก`;
+ return `Pending ที่บันทึก (${q.toLocaleString()}) ไม่ตรงกับส่วนต่าง Plan − Actual (${gap.toLocaleString()}) ควรตรวจสอบสาเหตุเพิ่มเติม`;
+}
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+/* ===== AI Summary (วิเคราะห์อัตโนมัติจากข้อมูลทุก Fleet: รายวัน / รายสัปดาห์) ===== */
+let AI_BASIS="avg";
+function aiSetBasis(v){AI_BASIS=v;chartAnimWindow(1800);renderAISummary();tagChartAnim()}
+const AI_MS=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const AI_LV={good:{t:"ปกติ",c:"#087b42",bg:"#e6f7ee"},warn:{t:"เฝ้าระวัง",c:"#b86e00",bg:"#fff3dc"},bad:{t:"ต้องเร่งแก้ไข",c:"#c42632",bg:"#fdeaec"},none:{t:"ไม่มีข้อมูล",c:"#7a879a",bg:"#f1f4f8"}};
+function aiWeeks(ym){const n=days(ym),[y,m]=ym.split("-").map(Number),w=[];let s=1;for(let d=1;d<=n;d++){if(new Date(y,m-1,d).getDay()===0||d===n){w.push({s,e:d});s=d+1}}return w}
+function aiFleets(){const vf=document.getElementById("viewFleet").value,cf=document.getElementById("customerFilter")?document.getElementById("customerFilter").value:"ALL";return FLEETS.filter(f=>(vf==="ALL"||f===vf)&&(cf==="ALL"||customerOf(f)===cf))}
+function aiStat(rows,fl,s,e){
+ let P=0,A=0,Q=0;const dd=[];
+ rows.forEach(x=>{if(!fl.includes(x.fleet))return;const d=+x.date.slice(-2);if(d<s||d>e)return;const p=+x.plan||0,a=+x.actual||0,q=+x.pending||0;P+=p;A+=a;Q+=q;dd.push({d,p,a,q})});
+ const rate=P?A/P*100:(A>0?100:null);
+ return {P,A,Q,rate,dd};
+}
+function aiLevel(st){if(!st.P&&!st.A&&!st.Q)return "none";return st.rate>=95?"good":st.rate>=80?"warn":"bad"}
+function renderAISummary(){
+ const box=document.getElementById("aiSummary");if(!box)return;
+ const ym=selectedYM("year","month"),pym=prevYM(ym),n=days(ym),pn=days(pym),rows=rowsFor(ym),prows=rowsFor(pym),fl=aiFleets();
+ const [y,m]=ym.split("-").map(Number),[py,pm]=pym.split("-").map(Number);
+ const curLb=`${AI_MS[m-1]} ${y+543}`,preLb=`${AI_MS[pm-1]} ${py+543}`;
+ const nw=nonWorkDays(ym),pnw=nonWorkDays(pym),STREAK_MIN=3,basis=AI_BASIS;
+ const fmt=v=>v==null?"-":Math.round(+v).toLocaleString("en-US");
+ const fmt0=v=>v==null?"-":Math.round(+v).toLocaleString("en-US");
+ const sg=(v,dec)=>v==null?"-":(v>0?"+":"")+(dec?v.toFixed(dec):Math.round(v).toLocaleString("en-US"));
+ const col=v=>v==null?"#6d7a90":v>=1?"#087b42":v<=-1?"#c42632":"#6d7a90";
+ const series=(rs,fs,nn)=>{const a=Array(nn+1).fill(0);rs.forEach(x=>{if(!fs.includes(x.fleet))return;const d=+x.date.slice(-2);if(d>=1&&d<=nn)a[d]+=+x.actual||0});return a};
+ /* Average / High / Low / Volatility: ไม่นับวันอาทิตย์ วันหยุด และค่า 0 */
+ const metrics=(a,nn,nwSet)=>{
+  let total=0;for(let d=1;d<=nn;d++)total+=a[d];
+  const vals=[],dd=[];for(let d=1;d<=nn;d++)if(!nwSet.has(d)&&a[d]>0){vals.push(a[d]);dd.push(d)}
+  const cnt=vals.length,avg=cnt?vals.reduce((t,v)=>t+v,0)/cnt:null;
+  const sd=cnt>1?Math.sqrt(vals.reduce((t,v)=>t+(v-avg)*(v-avg),0)/cnt):0;
+  return {total,vals,dd,cnt,avg,high:cnt?Math.max(...vals):null,low:cnt?Math.min(...vals):null,cv:cnt>=5&&avg?sd/avg*100:null};
+ };
+ const streakOf=(vals,dd)=>{
+  const runs=[];let cur=null;
+  for(let i=1;i<vals.length;i++){
+   const dir=vals[i]>vals[i-1]?1:vals[i]<vals[i-1]?-1:0;
+   if(dir&&cur&&cur.dir===dir){cur.end=i;cur.len++}else{cur=dir?{dir,start:i-1,end:i,len:1}:null;if(cur)runs.push(cur)}
+  }
+  const mk=r=>r?{len:r.len,from:dd[r.start],to:dd[r.end],pct:(vals[r.end]/vals[r.start]-1)*100,ongoing:r.end===vals.length-1}:null;
+  const pick=dir=>mk(runs.filter(x=>x.dir===dir&&x.len>=STREAK_MIN).sort((p,q)=>q.len-p.len||q.end-p.end)[0]);
+  const last=runs[runs.length-1],now=last&&last.end===vals.length-1&&last.len>=STREAK_MIN?{dir:last.dir,len:last.len}:null;
+  return {up:pick(1),dn:pick(-1),now};
+ };
+ const ent=(label,fs)=>{
+  const c=metrics(series(rows,fs,n),n,nw),p=metrics(series(prows,fs,pn),pn,pnw),st=streakOf(c.vals,c.dd);
+  const chg=c.total-p.total,pct=p.total>0?chg/p.total*100:null,dAvg=p.avg>0&&c.avg!=null?(c.avg/p.avg-1)*100:null;
+  const val=mm=>basis==="avg"?mm.avg:mm.total,pv=val(p),cv=val(c),dB=basis==="avg"?dAvg:pct;
+  return {label,c,p,chg,pct,dAvg,st,pv,cv,dB,has:c.total>0||p.total>0};
+ };
+ const volLv=cv=>cv==null?{t:"ข้อมูลน้อย",c:"#7a879a",bg:"#f1f4f8"}:cv<15?{t:"ต่ำ",c:"#087b42",bg:"#e6f7ee"}:cv<=30?{t:"ปานกลาง",c:"#b86e00",bg:"#fff3dc"}:{t:"สูง",c:"#c42632",bg:"#fdeaec"};
+ const statusOf=e=>{
+  if(!e.has)return {t:"ไม่มีข้อมูล",c:"#7a879a",bg:"#f1f4f8",tags:[]};
+  const tags=[];
+  if(e.st.now)tags.push(e.st.now.dir>0?`▲ เพิ่มต่อเนื่อง ${e.st.now.len} วัน`:`▼ ลดต่อเนื่อง ${e.st.now.len} วัน`);
+  if(e.c.cv!=null&&e.c.cv>30)tags.push("ผันผวนสูง");
+  let r;
+  if(e.p.cnt===0)r={t:"ไม่มีข้อมูลเดือนก่อน",c:"#7a879a",bg:"#f1f4f8"};
+  else if(e.c.cnt===0)r={t:"ยังไม่มีข้อมูลเดือนล่าสุด",c:"#7a879a",bg:"#f1f4f8"};
+  else{const d=e.dAvg;
+   r=d<=-15?{t:"ตรวจสอบด่วน",c:"#c42632",bg:"#fdeaec"}:d<=-5?{t:"เฝ้าระวัง (งานลดลง)",c:"#b86e00",bg:"#fff3dc"}:d>=15?{t:"งานเพิ่มขึ้นมาก",c:"#087b42",bg:"#d7f2e3"}:d>=5?{t:"งานเพิ่มขึ้น",c:"#087b42",bg:"#e6f7ee"}:{t:"ทรงตัว",c:"#4a5d7c",bg:"#eef2f8"};
+  }
+  return {...r,tags};
+ };
+ const groups=Object.keys(FLEET_GROUPS).map(c=>[c,FLEET_GROUPS[c].filter(f=>fl.includes(f))]).filter(g=>g[1].length);
+ const nsM=NON_SCG_FLEETS.filter(f=>fl.includes(f));if(nsM.length)groups.push(["non SCG",nsM]);
+ const fe={};fl.forEach(f=>{fe[f]=ent(f,[f])});
+ const tot=ent(`รวมทุก Fleet (${fl.length})`,fl);
+ const rowHtml=(e,cls,sub)=>{
+  const S=statusOf(e),V=volLv(e.c.cv),VP=volLv(e.p.cv),none=!e.has;
+  const dash=v=>none?"-":v;
+  const avgCell=none?"-":`${fmt(e.p.avg)} → <b>${fmt(e.c.avg)}</b><div class="aiSub" style="color:${col(e.dAvg)};font-weight:700">${e.dAvg==null?"-":sg(e.dAvg)+"%"}</div>`;
+  const hlCell=none?"-":`<div>High ${fmt0(e.p.high)} → <b>${fmt0(e.c.high)}</b></div><div>Low ${fmt0(e.p.low)} → <b>${fmt0(e.c.low)}</b></div>`;
+  const volCell=none?"-":`<span class="aiBadge" style="background:${V.bg};color:${V.c}">${V.t}${e.c.cv!=null?" "+e.c.cv.toFixed(0)+"%":""}</span><div class="aiSub">เดือนก่อน ${VP.t}${e.p.cv!=null?" "+e.p.cv.toFixed(0)+"%":""}</div>`;
+  return `<tr><td class="aiFleet ${cls} ${sub?"aiFl":""}" title="${e.label}">${e.label}</td><td class="${cls}">${dash(fmt0(e.p.total))}</td><td class="${cls}"><b>${dash(fmt0(e.c.total))}</b></td><td class="${cls}" style="color:${col(e.chg)};font-weight:700">${none?"-":sg(e.chg)}</td><td class="${cls}" style="color:${col(e.pct)};font-weight:800">${none||e.pct==null?"-":sg(e.pct)+"%"}</td><td class="${cls}">${avgCell}</td><td class="${cls}">${hlCell}</td><td class="${cls}">${volCell}</td><td class="${cls}"><span class="aiBadge" style="background:${S.bg};color:${S.c}">${S.t}</span>${S.tags.length?`<div class="aiTags">${S.tags.map(t=>`<span class="aiTag">${t}</span>`).join("")}</div>`:""}</td></tr>`;
+ };
+ const body=rowHtml(tot,"aiTotal",false).replace('<tr>','<tr class="aiTotal">')+groups.map(([c,mem])=>rowHtml(ent(c,mem),"aiCl",false)+mem.map(f=>rowHtml(fe[f],"",true)).join("")).join("");
+ /* Top 5 */
+ const cmp=fl.map(f=>fe[f]).filter(e=>e.dB!=null&&(basis==="avg"?e.p.cnt&&e.c.cnt:e.p.total>0&&e.c.total>0));
+ const dn5=cmp.filter(e=>e.dB<0).sort((p,q)=>p.dB-q.dB).slice(0,5),up5=cmp.filter(e=>e.dB>0).sort((p,q)=>q.dB-p.dB).slice(0,5);
+ const bl=basis==="avg"?"เฉลี่ย/วันทำงาน":"เที่ยวรวม";
+ const rk=(arr,good)=>arr.length?arr.map((e,i)=>{
+  const c=good?"#087b42":"#c42632",bg=good?"#e6f7ee":"#fdeaec",tg=[];
+  if(e.st.now)tg.push(e.st.now.dir>0?`▲ เพิ่มต่อเนื่อง ${e.st.now.len} วัน`:`▼ ลดต่อเนื่อง ${e.st.now.len} วัน`);
+  return `<div class="aiRk"><div class="aiRkN" style="background:${bg};color:${c}">${i+1}</div><div class="aiRkM"><b title="${e.label}">${e.label}</b><span>${fmt(e.pv)} → ${fmt(e.cv)} ${bl} • เที่ยวรวม ${sg(e.chg)}</span>${tg.length?`<div class="aiTags" style="justify-content:flex-start">${tg.map(t=>`<span class="aiTag">${t}</span>`).join("")}</div>`:""}</div><div class="aiRkD" style="color:${c}">${sg(e.dB)}%</div></div>`;
+ }).join(""):`<div class="aiEmpty">ไม่มี Fleet ที่${good?"เพิ่มขึ้น":"ลดลง"}</div>`;
+ /* ตรวจสอบอัตโนมัติ: งานเพิ่ม/ลดต่อเนื่องหลายวัน */
+ const chk=(dir)=>{
+  const arr=fl.map(f=>fe[f]).filter(e=>e.st[dir]).sort((p,q)=>q.st[dir].len-p.st[dir].len||Math.abs(q.st[dir].pct)-Math.abs(p.st[dir].pct));
+  return arr.length?arr.map(e=>{const r=e.st[dir];return `<div class="aiChk"><b>${e.label}</b> — ${dir==="up"?"เพิ่ม":"ลด"}ต่อเนื่อง <b style="color:${dir==="up"?"#087b42":"#c42632"}">${r.len} วัน</b> <span>(วันที่ ${r.from}→${r.to} • ${sg(r.pct)}%${r.ongoing?" • ยังต่อเนื่องถึงวันล่าสุด":""})</span></div>`}).join(""):`<div class="aiEmpty">ไม่พบ Fleet ที่${dir==="up"?"เพิ่ม":"ลด"}ต่อเนื่อง ${STREAK_MIN} วันขึ้นไป</div>`;
+ };
+ /* ตรวจสอบอัตโนมัติ: รายวันและ Fleet ที่มี Pending ตามตัวกรองปัจจุบัน */
+ const pendingRows=rows.map(r=>({...r,_pending:pendingAmount(r)})).filter(r=>r._pending>0).sort((a,b)=>b.date.localeCompare(a.date)||String(a.fleet).localeCompare(String(b.fleet),"th"));
+ const pendingAuditHtml=pendingRows.length?`<div class="pendingAuditWrap"><table class="pendingAuditTbl"><thead><tr><th>วันที่</th><th>Fleet</th><th>จำนวน Pending</th><th>Plan</th><th>Actual</th><th>สาเหตุเบื้องต้น</th></tr></thead><tbody>${pendingRows.map(r=>{const d=+r.date.slice(-2),dt=new Date(ym+"-"+String(d).padStart(2,"0")).toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"numeric"});return `<tr><td>${dt}</td><td>${escapeHtml(r.fleet)}</td><td class="pendingNum">${r._pending.toLocaleString()}</td><td>${(+r.plan||0).toLocaleString()}</td><td>${(+r.actual||0).toLocaleString()}</td><td>${escapeHtml(pendingReason(r,r._pending))}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="aiEmpty">ไม่พบรายการ Pending ในช่วงเวลาและตัวกรองที่เลือก</div>`;
+ /* Chart helpers */
+ const niceMax=v=>{if(!(v>0))return 10;const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e};
+ const C_PRE="#f08c00",C_CUR="#1768d8",AX="#8a97ab";
+ const short=t=>t.length>22?t.slice(0,21)+"…":t;
+ let barCards="";
+ const barGroups=[];
+ groups.forEach(([c,mem])=>{
+  if(c.startsWith("Central Cluster")||c.startsWith("West Cluster")){let t=barGroups.find(x=>x[2]);if(!t){t=["Central Cluster & West Cluster",[],true];barGroups.push(t)}t[1]=t[1].concat(mem)}
+  else barGroups.push([c,mem,false]);
+ });
+ const maxN=Math.max(1,...barGroups.map(x=>x[1].length));
+ /* ทุก Cluster เป็นแท่งแนวนอน ขนาดกราฟเท่ากันทุกใบ (ความสูงคิดจากจำนวน Fleet สูงสุด) */
+ barGroups.forEach(([c,mem])=>{
+  const items=mem.map(f=>({f,pv:fe[f].pv||0,cv:fe[f].cv||0,d:fe[f].dB}));
+  items.sort((a,b)=>b.cv-a.cv||b.pv-a.pv); /* เรียงจาก Actual เดือนล่าสุด มาก → น้อย */
+  const N=items.length,W=560,L=128,R=104,T=8,slotH=30,pw=W-L-R,plotH=maxN*slotH,H=T+plotH+24,slot=plotH/N,bh=Math.min(14,slot*0.36),fs=bh>=12?10:9.5;
+  const mx=niceMax(Math.max(...items.map(i=>Math.max(i.pv,i.cv)))),X=v=>v/mx*pw;
+  let g="";
+  for(let k=0;k<=4;k++){const v=mx*k/4,xx=L+X(v);g+=`<line x1="${xx}" x2="${xx}" y1="${T}" y2="${T+plotH}" stroke="#e3e9f1"/><text x="${xx}" y="${T+plotH+13}" text-anchor="middle" font-size="9.5" fill="${AX}">${fmt0(v)}</text>`}
+  const hb=(y,v,color,tc,lb)=>v>0?`<rect class="aiHb" x="${L}" y="${y}" width="${Math.max(2,X(v))}" height="${bh}" rx="3" fill="${color}"><title>${lb}: ${fmt0(v)}</title></rect><text class="aiHbl" x="${L+X(v)+5}" y="${y+bh-(bh>=12?3.5:2)}" font-size="${fs}" font-weight="700" fill="${tc}" stroke="#fff" stroke-width="3" paint-order="stroke">${fmt0(v)}</text>`:`<text x="${L+5}" y="${y+bh-2}" font-size="9.5" fill="#9aa5b6">-</text>`;
+  items.forEach((it,i)=>{
+   const yc=T+i*slot+slot/2;
+   g+=hb(yc-bh-0.5,it.pv,C_PRE,"#b86e00",`${it.f} • ${preLb}`)+hb(yc+0.5,it.cv,C_CUR,"#0f4aa6",`${it.f} • ${curLb}`);
+   const mc=Math.max(8,Math.floor((L-12)/6.3)),lines=[];let cur="";
+   it.f.split(" ").forEach(w=>{if(cur&&(cur+" "+w).length>mc){lines.push(cur);cur=w}else cur=cur?cur+" "+w:w});if(cur)lines.push(cur);
+   const ls=lines.slice(0,3);
+   g+=`<text x="${L-8}" y="${yc-(ls.length-1)*5.5+3.5}" text-anchor="end" font-size="10" fill="#34496d">${ls.map((t,k)=>`<tspan x="${L-8}" dy="${k?11:0}">${t}</tspan>`).join("")}</text>`;
+   if(it.d!=null)g+=`<text x="${W-6}" y="${yc+4}" text-anchor="end" font-size="10.5" font-weight="800" fill="${col(it.d)}">${it.d>0?"▲ ":it.d<0?"▼ ":""}${sg(it.d)}%</text>`;
+  });
+  barCards+=`<div class="aiChart"><h3>${c} <span style="font-weight:400;color:#6d7a90">(${N} Fleet)</span></h3><div class="scr"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="min-width:480px" role="img" aria-label="กราฟแท่งคู่แนวนอน ${c}">${g}<line x1="${L}" x2="${L}" y1="${T}" y2="${T+plotH}" stroke="#b8c4d6"/></svg></div></div>`;
+ });
+ let lineSvg;
+ {
+  const W=1100,H=250,L=48,R=14,T=14,B=30,pw=W-L-R,ph=H-T-B,slots=Math.max(n,pn);
+  const cs=series(rows,fl,n),ps=series(prows,fl,pn);
+  const pt=(a,nn,nwSet)=>{const o=[];for(let d=1;d<=nn;d++)if(!nwSet.has(d)&&a[d]>0)o.push({d,v:a[d]});return o};
+  const cpts=pt(cs,n,nw),ppts=pt(ps,pn,pnw),mx=niceMax(Math.max(0,...cpts.map(p=>p.v),...ppts.map(p=>p.v)));
+  const X=d=>L+(d-0.5)/slots*pw,Y=v=>T+ph-v/mx*ph;
+  let g="";
+  for(let k=0;k<=4;k++){const v=mx*k/4,yy=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="#e3e9f1"/><text x="${L-6}" y="${yy+3}" text-anchor="end" font-size="9.5" fill="${AX}">${fmt0(v)}</text>`}
+  for(let d=1;d<=slots;d++)g+=`<text x="${X(d)}" y="${T+ph+16}" text-anchor="middle" font-size="9.5" fill="${AX}">${d}</text>`;
+  const line=(pts,color,lb,dash)=>pts.length?`<g class="aiLnG"><polyline fill="none" stroke="${color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" ${dash?'stroke-dasharray="6 4"':""} points="${pts.map(p=>X(p.d).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ")}"/>`+pts.map(p=>`<circle cx="${X(p.d).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="3" fill="#fff" stroke="${color}" stroke-width="2"><title>${lb} วันที่ ${p.d}: ${fmt0(p.v)} เที่ยว</title></circle>`).join("")+`</g>`:"";
+  lineSvg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="กราฟเส้นภาพรวมทั้งเดือน">${g}<line x1="${L}" x2="${W-R}" y1="${T+ph}" y2="${T+ph}" stroke="#b8c4d6"/>${line(ppts,C_PRE,preLb,true)}${line(cpts,C_CUR,curLb,false)}</svg>`;
+ }
+ const lastDay=(()=>{let ld=0;const a=series(rows,fl,n);for(let d=1;d<=n;d++)if(a[d]>0)ld=d;return ld})();
+ const cw=metrics(series(rows,fl,n),n,nw).cnt,pw2=metrics(series(prows,fl,pn),pn,pnw).cnt;
+ const seg=(v,t)=>`<button class="${basis===v?"on":""}" onclick="aiSetBasis('${v}')">${t}</button>`;
+ const th=["Cluster / Fleet<br><span style=\"font-weight:400\">กลุ่มและโรงงาน</span>",`Trips ${preLb}<br><span style="font-weight:400">เที่ยวรวมเดือนก่อน</span>`,`Trips ${curLb}<br><span style="font-weight:400">เที่ยวรวมเดือนล่าสุด</span>`,"Change Trips<br><span style=\"font-weight:400\">เพิ่ม/ลด (เที่ยว)</span>","Change %<br><span style=\"font-weight:400\">เปลี่ยนแปลง (%)</span>","Average / Day<br><span style=\"font-weight:400\">ก่อน → ล่าสุด</span>","High / Low<br><span style=\"font-weight:400\">ก่อน → ล่าสุด</span>","Volatility<br><span style=\"font-weight:400\">ความผันผวน (CV)</span>","Analysis Status<br><span style=\"font-weight:400\">สถานะตรวจสอบต่อ</span>"];
+ box.innerHTML=`<p class="aiNote">เปรียบเทียบ <b>${preLb}</b> (เดือนก่อน) กับ <b>${curLb}</b> (เดือนล่าสุด = เดือนที่เลือกด้านบน${lastDay?` ข้อมูลถึงวันที่ ${lastDay}`:""}) ของทุก Fleet ตามตัวกรอง Fleet/ลูกค้า • Trips = จำนวนเที่ยว Actual รวมทั้งเดือน • Average/Day, High, Low, Volatility คิดจากวันทำงานเท่านั้น (เดือนล่าสุด ${cw} วัน / เดือนก่อน ${pw2} วัน) โดยไม่นับค่า 0 วันอาทิตย์ วันหยุดนักขัตฤกษ์ตามรายการ • เดือนล่าสุดอาจยังไม่ครบเดือน จึงควรดู Average/Day ประกอบ Change % • Volatility = ส่วนเบี่ยงเบนมาตรฐาน ÷ ค่าเฉลี่ยรายวัน (ต่ำ &lt;15%, ปานกลาง 15–30%, สูง &gt;30%) • Status ตัดสินจาก % เปลี่ยนของ Average/Day: ≤ −15% ตรวจสอบด่วน, ≤ −5% เฝ้าระวัง, ≥ +5% งานเพิ่มขึ้น, ≥ +15% งานเพิ่มขึ้นมาก</p>
+<div class="aiWrap"><table class="aiTbl" style="min-width:1080px"><thead><tr>${th.map((t,i)=>`<th${i===0?' class="aiFleet"':""}>${t}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
+<div class="aiTop" style="margin:16px 0 0"><b style="font-size:13px;color:var(--navy)">🏆 จัดอันดับ Top 5 และกราฟแท่ง</b><div class="aiSeg">${seg("avg","เฉลี่ย/วันทำงาน")}${seg("total","เที่ยวรวม")}</div></div>
+<div class="aiGrid2"><div class="aiBox"><h3>📉 Top 5 งานลดลงมากที่สุด <span style="font-weight:400;color:#6d7a90">(${bl})</span></h3>${rk(dn5,false)}</div><div class="aiBox"><h3>📈 Top 5 งานเพิ่มขึ้นมากที่สุด <span style="font-weight:400;color:#6d7a90">(${bl})</span></h3>${rk(up5,true)}</div></div>
+<div class="aiGrid2"><div class="aiBox"><h3>🔎 ตรวจสอบอัตโนมัติ: งานลดลงต่อเนื่องหลายวัน</h3>${chk("dn")}</div><div class="aiBox"><h3>🔎 ตรวจสอบอัตโนมัติ: งานเพิ่มต่อเนื่องหลายวัน</h3>${chk("up")}</div></div>
+<div class="aiBox" style="margin-top:12px"><h3>🚩 รายการตรวจสอบอัตโนมัติ: Fleet ที่มี Pending — ${curLb}</h3><div class="aiNote">แสดงวันที่, Fleet, จำนวน Pending และ Plan/Actual เพื่อช่วยตรวจสอบ โดยใช้ตัวกรอง Fleet/ลูกค้าเดียวกับ Dashboard</div>${pendingAuditHtml}<div class="pendingAuditNote">หมายเหตุ: ระบบไม่มีช่องระบุสาเหตุหน้างานแยกต่างหาก สาเหตุข้างต้นจึงเป็นการประเมินจาก Plan, Actual และ Pending เท่านั้น ไม่ใช่สาเหตุที่ผู้ใช้งานบันทึกไว้</div></div>
+<p class="aiNote" style="margin-top:8px">"ต่อเนื่อง" = จำนวนวันทำงานติดกันที่เที่ยวสูงกว่า/ต่ำกว่าวันทำงานก่อนหน้า ตั้งแต่ ${STREAK_MIN} วันขึ้นไป (เดือนล่าสุด) • แสดงรอบที่ยาวที่สุดของแต่ละ Fleet</p>
+<div style="margin-top:16px"><b style="font-size:13px;color:var(--navy)">📊 เปรียบเทียบทุก Fleet แยกตาม Cluster: ${preLb} vs ${curLb}</b> <span style="font-size:12px;color:#6d7a90">(${bl} • ตัวเลขใต้ชื่อคือ % เปลี่ยนแปลง)</span><div class="aiLg" style="margin-top:6px"><span><i style="background:${C_PRE}"></i>${preLb} (เดือนก่อน)</span><span><i style="background:${C_CUR}"></i>${curLb} (เดือนล่าสุด)</span></div></div><div class="aiBars">${barCards}</div>
+<div class="aiChart"><h3>📈 ภาพรวมทั้งเดือน: เที่ยวรวมรายวัน (Actual) ${preLb} vs ${curLb}</h3><div class="aiLg"><span><i style="background:${C_PRE}"></i>${preLb}</span><span><i style="background:${C_CUR}"></i>${curLb}</span><span style="color:#8490a2">ไม่แสดงวันอาทิตย์และวันหยุดนักขัตฤกษ์</span></div><div class="scr">${lineSvg}</div></div>`;
+}
+function renderFleetCharts(){
+  const ym=document.getElementById("month")?.value||cur,n=days(ym),container=document.getElementById("fleetCharts");
+  if(!container)return;
+  const selected=document.getElementById("viewFleet")?.value||"ALL",fs=selected==="ALL"?FLEETS:[selected];
+  const maxFor=fr=>Math.max(...Array.from({length:n},(_,i)=>{const d=String(i+1).padStart(2,"0"),r=fr.filter(x=>x.date.endsWith(d));return Math.max(sum(r,"plan"),sum(r,"actual"),sum(r,"pending"));}),1);
+  container.innerHTML=fs.map(f=>{
+    const fr=db.filter(x=>x.date.startsWith(ym)&&x.fleet===f),max=maxFor(fr);
+    return `<div class="fleetChartCard"><h3 title="${f}">${f}</h3><div class="fleetChartLegend"><span><i class="lg lplan"></i>Plan</span><span><i class="lg lactual"></i>Actual</span><span><i class="lg lpending"></i>Pending</span></div><div class="fleetChartWrap"><div class="fleetChart">${Array.from({length:n},(_,i)=>{
+      const d=String(i+1).padStart(2,"0"),r=fr.filter(x=>x.date.endsWith(d)),p=sum(r,"plan"),a=sum(r,"actual"),q=sum(r,"pending");
+      const hp=p?Math.max(3,p/max*84):0,ha=a?Math.max(3,a/max*84):0,hq=q?Math.max(3,q/max*84):0;
+      const dateLabel=new Date(ym+"-"+d).toLocaleDateString("th-TH",{day:"2-digit",month:"short"});
+      return `<div class="fday"><div class="fbarbox"><i class="fbar fplan" style="height:${hp}%"></i>${p>0?`<span class="flabel">${p.toLocaleString()}</span>`:""}</div><div class="fbarbox"><i class="fbar factual" style="height:${ha}%"></i>${a>0?`<span class="flabel">${a.toLocaleString()}</span>`:""}</div><div class="fbarbox"><i class="fbar fpending" style="height:${hq}%"></i>${q>0?`<span class="flabel">${q.toLocaleString()}</span>`:""}</div><span class="fdate">${dateLabel}</span></div>`;
+    }).join("")}</div></div></div>`;
+  }).join("");
+}
+
+/* ป้องกันข้อมูลที่ผู้ใช้กำลังกรอกหาย เมื่อผู้ใช้คนอื่นกดบันทึก: จำช่องที่แก้ไขแต่ยังไม่บันทึก (dirty) และอัปเดตตารางแบบ in-place */
+let matrixKey="";const matrixDirty=new Map();
+function matrixDirtyKey(fleet,ds,m){return fleet+"|"+ds+"|"+m}
+function refreshMatrixInPlace(fleet){
+ document.querySelectorAll("#matrixTable input").forEach(x=>{
+  const k=matrixDirtyKey(fleet,x.dataset.d,x.dataset.m);
+  if(matrixDirty.has(k)){x.classList.add("dirty");return}
+  x.classList.remove("dirty");
+  const r=db.find(z=>z.date===x.dataset.d&&z.fleet===fleet),v=String(r?(r[x.dataset.m]||0):0);
+  if(x.value!==v)x.value=v;
+ });
+ calcMatrix();
+}
+function renderMatrix(){
+ const ym=selectedYM("inputYear","inputMonth"), n=days(ym), fleet=inputFleet.value;
+ const mkey=ym+"|"+fleet;
+ if(matrixKey===mkey&&document.querySelector("#matrixTable input")){refreshMatrixInPlace(fleet);return}
+ matrixKey=mkey;
+ let h='<table class="matrix"><thead><tr><th>Metric</th>'+Array.from({length:31},(_,i)=>`<th style="${i+1>n?"opacity:.25":""}">${i+1}</th>`).join("")+'<th>Total</th></tr></thead><tbody>';
+ ["plan","actual","pending"].forEach(m=>{
+  h+=`<tr><td class="metric">${m==="plan"?"Plan (Trips)":m==="actual"?"Actual (Trips)":"Pending (Trips)"}</td>`;
+  for(let i=1;i<=31;i++){let ds=ym+"-"+String(i).padStart(2,"0"),r=db.find(x=>x.date===ds&&x.fleet===fleet);let val=r?(r[m]||0):0;h+=`<td class="${m==="pending"?"pending":""}"><input ${i>n?"disabled":""} type="number" min="0" data-d="${ds}" data-m="${m}" value="${val}"></td>`}
+  h+=`<td class="total" id="mt-${m}">0</td></tr>`;
+ });
+ h+='</tbody></table>';matrixTable.innerHTML=h;calcMatrix();
+ document.querySelectorAll("#matrixTable input").forEach(x=>{
+  const k=matrixDirtyKey(fleet,x.dataset.d,x.dataset.m);
+  if(matrixDirty.has(k)){x.value=matrixDirty.get(k);x.classList.add("dirty")}
+  x.oninput=()=>{matrixDirty.set(matrixDirtyKey(fleet,x.dataset.d,x.dataset.m),x.value);x.classList.add("dirty");calcMatrix()};
+ });
+ calcMatrix();
+}
+function calcMatrix(){["plan","actual","pending"].forEach(m=>{let t=0;document.querySelectorAll(`#matrixTable input[data-m="${m}"]`).forEach(x=>t+=+x.value||0);let e=document.getElementById("mt-"+m);if(e)e.textContent=t.toLocaleString()})}
+function exportExcel(){
+ const ym=selectedYM("year","month"),fleetFilter=document.getElementById("viewFleet").value,customer=document.getElementById("customerFilter").value;
+ const filtered=rowsFor(ym).slice().sort((a,b)=>a.date.localeCompare(b.date)||String(a.fleet).localeCompare(String(b.fleet),"th"));
+ const dataHeaders=["วันที่","Fleet","ประเภทลูกค้า","Plan","Actual","Pending","สาเหตุ Pending"];
+ const detailRows=filtered.map(r=>{const q=pendingAmount(r);return {"วันที่":r.date,"Fleet":r.fleet,"ประเภทลูกค้า":customerOf(r.fleet)==="NONSCG"?"non SCG":"SCG","Plan":+r.plan||0,"Actual":+r.actual||0,"Pending":q,"สาเหตุ Pending":q>0?pendingReason(r,q):""}});
+ const pendingHeaders=["วันที่","Fleet","จำนวน Pending","Plan","Actual","สาเหตุเบื้องต้น"];
+ const pendingRows=detailRows.filter(r=>r.Pending>0).map(r=>({"วันที่":r["วันที่"],"Fleet":r.Fleet,"จำนวน Pending":r.Pending,"Plan":r.Plan,"Actual":r.Actual,"สาเหตุเบื้องต้น":r["สาเหตุ Pending"]}));
+ const sumByFleet=new Map();
+ detailRows.forEach(r=>{let z=sumByFleet.get(r.Fleet);if(!z){z={"Fleet":r.Fleet,"Cluster":clusterOf(r.Fleet)||"non SCG","ประเภทลูกค้า":r["ประเภทลูกค้า"],"Plan รวม":0,"Actual รวม":0,"Pending รวม":0,"วันที่มี Pending":0};sumByFleet.set(r.Fleet,z)}z["Plan รวม"]+=r.Plan;z["Actual รวม"]+=r.Actual;z["Pending รวม"]+=r.Pending;if(r.Pending>0)z["วันที่มี Pending"]++});
+ const summaryHeaders=["Fleet","Cluster","ประเภทลูกค้า","Plan รวม","Actual รวม","Pending รวม","วันที่มี Pending"];
+ const filterRows=[{"ตัวกรอง":"ปี","ค่าที่เลือก":String(+ym.slice(0,4)+543)},{"ตัวกรอง":"เดือน","ค่าที่เลือก":MONTH_NAMES[+ym.slice(5,7)-1]},{"ตัวกรอง":"Fleet","ค่าที่เลือก":fleetFilter==="ALL"?"ทุก Fleet":fleetFilter},{"ตัวกรอง":"ลูกค้า","ค่าที่เลือก":customer==="ALL"?"แสดงทั้งหมด":customer==="SCG"?"SCG":"non SCG"},{"ตัวกรอง":"Export เมื่อ","ค่าที่เลือก":new Date().toLocaleString("th-TH")}];
+ const baseName=`Daily_Transport_Report_${ym}_${fleetFilter==="ALL"?"AllFleet":fleetFilter}_${customer}`.replace(/[^a-zA-Z0-9ก-๙_-]/g,"_");
+ if(typeof XLSX==="undefined"){
+  const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const csv="\uFEFF"+[dataHeaders.map(quote).join(","),...detailRows.map(r=>dataHeaders.map(h=>quote(r[h])).join(","))].join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=baseName+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  alert("ไม่สามารถโหลดตัวช่วยสร้างไฟล์ Excel ได้ จึงส่งออกเป็น CSV ซึ่งเปิดด้วย Excel ได้");return;
+ }
+ const wb=XLSX.utils.book_new();
+ const makeSheet=(rows,headers,widths)=>{const ws=XLSX.utils.json_to_sheet(rows,{header:headers});ws["!cols"]=widths.map(w=>({wch:w}));return ws};
+ XLSX.utils.book_append_sheet(wb,makeSheet(detailRows,dataHeaders,[14,30,18,12,12,12,65]),"ข้อมูลตามตัวกรอง");
+ XLSX.utils.book_append_sheet(wb,makeSheet(pendingRows,pendingHeaders,[14,30,16,12,12,65]),"Pending Audit");
+ XLSX.utils.book_append_sheet(wb,makeSheet([...sumByFleet.values()],summaryHeaders,[30,32,18,14,14,14,18]),"สรุป Fleet");
+ XLSX.utils.book_append_sheet(wb,makeSheet(filterRows,["ตัวกรอง","ค่าที่เลือก"],[22,42]),"เงื่อนไขการกรอง");
+ XLSX.writeFile(wb,baseName+".xlsx");
+}
+function showLoadingOverlay(message){
+ const overlay=document.getElementById("refreshOverlay"),label=document.getElementById("refreshOverlayText");
+ if(label)label.textContent=message||"กำลังโหลดข้อมูล...";
+ if(overlay){overlay.classList.add("show");overlay.setAttribute("aria-hidden","false")}
+}
+function hideLoadingOverlay(){
+ const overlay=document.getElementById("refreshOverlay"),label=document.getElementById("refreshOverlayText");
+ if(overlay){overlay.classList.remove("show");overlay.setAttribute("aria-hidden","true")}
+ if(label)label.textContent="กำลังโหลดข้อมูล...";
+}
+async function saveMatrix(){
+ const saveBtn=document.getElementById("saveMatrixBtn");
+ if(saveBtn)saveBtn.disabled=true;
+ showLoadingOverlay("กำลังบันทึกข้อมูล...");
+ try{
+ await new Promise(requestAnimationFrame);
+ const ym=selectedYM("inputYear","inputMonth"),n=days(ym),fleet=inputFleet.value;let count=0,records=[],savedKeys=[];
+ for(let i=1;i<=n;i++){let ds=ym+"-"+String(i).padStart(2,"0"),g=m=>document.querySelector(`#matrixTable input[data-d="${ds}"][data-m="${m}"]`),p=+g("plan").value||0,a=+g("actual").value||0,qv=+g("pending").value||0,q=qv>0?qv:Math.max(0,p-a);let r=db.find(x=>x.date===ds&&x.fleet===fleet);
+  const dKeys=["plan","actual","pending"].map(m=>matrixDirtyKey(fleet,ds,m)).filter(k=>matrixDirty.has(k));
+  if(dKeys.length)dKeys.forEach(k=>savedKeys.push(k));
+  if(dKeys.length&&(p||a||q||r)){
+    const record={date:ds,fleet,plan:p,actual:a,pending:q,updated:new Date().toISOString()};
+    if(r&&r.id)record.id=r.id;
+    records.push(record);count++;
+  }
+ }
+ if(!count){savedKeys.forEach(k=>matrixDirty.delete(k));saveStatus.textContent="ไม่มีข้อมูลที่เปลี่ยนแปลง • "+new Date().toLocaleTimeString("th-TH");renderMatrix();return}
+ if(dbRef){
+   try{
+     const updates={};
+     records.forEach(record=>{updates[fbKey(record.date,record.fleet)]=record;});
+     await dbRef.update(updates);
+   }catch(error){
+     console.error("บันทึกข้อมูล Realtime ไม่สำเร็จ:",error);
+     saveStatus.textContent="บันทึกไม่สำเร็จ: "+error.message;
+     return;
+   }
+ }else{
+   records.forEach(record=>{
+     const i=db.findIndex(x=>x.date===record.date&&x.fleet===record.fleet);
+     if(i>=0)db[i]={...db[i],...record};else db.push(record);
+   });
+   localStorage.setItem(KEY,JSON.stringify(db));
+ }
+ savedKeys.forEach(k=>matrixDirty.delete(k));
+ const otherDirty=new Set([...matrixDirty.keys()].map(k=>k.split("|")[0]));
+ saveStatus.textContent=`บันทึกแล้ว ${count} วัน • ${new Date().toLocaleTimeString("th-TH")}`+(otherDirty.size?` • ยังมีข้อมูลที่ยังไม่บันทึกของ: ${[...otherDirty].join(", ")}`:"");
+ render();renderMatrix();
+ }finally{
+   if(saveBtn)saveBtn.disabled=false;
+   hideLoadingOverlay();
+ }
+}
+function clusterOf(f){for(const [c,arr] of Object.entries(FLEET_GROUPS))if(arr.includes(f))return c;return "";}
+function fleetColor(f){if(NON_SCG_FLEETS.includes(f))return "#64748b";return CLUSTER_META[clusterOf(f)]?.[0]||"#1768d8";}
+function renderMap(){
+  const legend=document.getElementById("mapLegend"), map=document.getElementById("fleetMap"), rows=document.getElementById("fleetRows");
+  if(!legend||!map||!rows)return;
+  legend.innerHTML=Object.entries(CLUSTER_META).map(([c,v])=>`<span class="clusterpill" onclick="filterMap('${c.replace(/'/g,"\'")}')"><b style="background:${v[0]}"></b>${c} • ${FLEET_GROUPS[c].length} Fleet</span>`).join("");
+  map.querySelectorAll(".fmarker").forEach(x=>x.remove());
+  FLEETS.forEach(f=>{const pos=FLEET_META[f]||[50,50],d=document.createElement("div");d.className="fmarker";d.style.left=pos[0]+"%";d.style.top=pos[1]+"%";d.dataset.cluster=clusterOf(f);d.innerHTML=`<span class="fdot" style="background:${fleetColor(f)}"></span><span class="fname">${f}</span>`;d.onclick=()=>showFleetInfo(f);map.appendChild(d)});
+  renderFleetRows(FLEETS);
+}
+function renderFleetRows(list){
+ const rows=document.getElementById("fleetRows"); if(!rows)return;
+ const ym=selectedYM("year","month");
+ rows.innerHTML=list.map(f=>{const rr=db.filter(x=>x.date.startsWith(ym)&&x.fleet===f),p=sum(rr,"plan"),a=sum(rr,"actual"),q=sum(rr,"pending");return `<div class="frow" onclick="showFleetInfo('${f.replace(/'/g,"\'")}')"><b><span style="color:${fleetColor(f)}">●</span> ${f}</b><span class="fstats">Plan ${p.toLocaleString()} • Actual ${a.toLocaleString()} • Pending ${q.toLocaleString()}</span></div>`}).join("");
+}
+function showFleetInfo(f){
+ const rows=document.getElementById("fleetRows"),ym=document.getElementById("month")?.value||cur,rr=db.filter(x=>x.date.startsWith(ym)&&x.fleet===f),p=sum(rr,"plan"),a=sum(rr,"actual"),q=sum(rr,"pending");
+ if(rows)rows.innerHTML=`<div style="padding:4px 0 12px"><h3><span style="color:${fleetColor(f)}">●</span> ${f}</h3><p>${clusterOf(f)}</p><div class="fstats">Plan <b>${p.toLocaleString()}</b> • Actual <b>${a.toLocaleString()}</b> • Pending <b>${q.toLocaleString()}</b></div></div><div class="frow" onclick="renderFleetRows(FLEETS)">← ดู Fleet ทั้งหมด</div>`;
+}
+function filterMap(c){renderFleetRows(FLEET_GROUPS[c]||FLEETS);}
+function renderUsers(){usersBox.innerHTML=FLEETS.map((f,i)=>`<div class="user"><b>${f}</b><span class="green"><span class="dot"></span>ผู้ดูแล Fleet ${String(i+1).padStart(2,"0")}</span><br><span style="color:#7a879a">สิทธิ์: กรอกข้อมูล Fleet ตัวเอง</span></div>`).join("")}
+async function refreshDashboard(){
+ const btn=document.getElementById("refreshBtn");
+ if(btn)btn.disabled=true;
+ showLoadingOverlay("กำลังโหลดข้อมูล...");
+ try{
+   applyFiltersNow();chartAnimWindow(1800);
+   await new Promise(requestAnimationFrame);
+   await loadRealtimeData();
+   render();renderMatrix();
+ }finally{
+   await new Promise(resolve=>setTimeout(resolve,220));
+   if(btn)btn.disabled=false;
+   hideLoadingOverlay();
+ }
+}
+function scrollToId(id,b){document.getElementById(id).scrollIntoView({behavior:"smooth"});document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active")}
+/* ===== Manage Fleet: เพิ่ม Fleet ได้เองในหน้าเว็บ (เก็บใน Firebase path แยก daily_transport_fleets + สำรองในเครื่อง) ===== */
+const CUSTOM_FLEET_KEY="daily_transport_report_custom_fleets";
+const fleetRef=firebaseApp?window.firebase.database().ref("daily_transport_fleets"):null;
+let customFleets=[];
+function fleetFbKey(n){return encodeURIComponent(n).replace(/\./g,"%2E")}
+function validFleetRec(c){return c&&c.name&&(c.cluster==="non SCG"||FLEET_GROUPS[c.cluster])}
+function rebuildFleetOptions(){
+ const keepSet=new Set(["ALL",...FLEETS]);
+ ["viewFleet","inputFleet"].forEach(id=>{const sel=document.getElementById(id);if(!sel)return;Array.from(sel.options).forEach(o=>{if(!keepSet.has(o.value))o.remove()});if(sel.options.length&&!Array.from(sel.options).some(o=>o.value===sel.value))sel.value=sel.options[0].value});
+ ["viewFleet","inputFleet"].forEach(id=>{const sel=document.getElementById(id);if(!sel)return;const have=new Set(Array.from(sel.options).map(o=>o.value));FLEETS.forEach(f=>{if(!have.has(f)){const o=document.createElement("option");o.value=f;o.textContent=f;sel.appendChild(o)}})});
+}
+function canDeleteFleet(){return sessionStorage.getItem(LOGIN_SESSION_KEY)==="owner"}
+function renderFleetList(){
+ const box=document.getElementById("fleetList");if(!box)return;
+ const cust=new Set(customFleets.map(c=>c.name)),can=canDeleteFleet();
+ const gs=Object.keys(FLEET_GROUPS).map(c=>[c,FLEET_GROUPS[c]]).concat([["non SCG",NON_SCG_FLEETS]]);
+ let h=gs.map(([c,arr])=>`<div class="fgroup"><b>${c} <span>(${arr.length} Fleet)</span></b><div class="fchips">${arr.map(f=>`<span class="fchip${cust.has(f)?" new":""}">${escapeHtml(f)}${cust.has(f)?" <i>ใหม่</i>":""}${can?`<button type="button" class="fdel" title="ลบ Fleet นี้" data-f="${escapeHtml(f)}" onclick="deleteFleet(this.dataset.f)">✕</button>`:""}</span>`).join("")}</div></div>`).join("");
+ if(can)h+=`<div class="fgroup"><b>🗑 Fleet ที่ลบแล้ว <span>(${deletedFleets.length} Fleet • ข้อมูลย้อนหลังยังอยู่ในระบบ กู้คืนได้)</span></b><div class="fchips">${deletedFleets.length?deletedFleets.map(d=>`<span class="fchip del">${escapeHtml(d.name)}<button type="button" class="frest" data-f="${escapeHtml(d.name)}" onclick="restoreFleet(this.dataset.f)">↩ กู้คืน</button></span>`).join(""):`<span class="aiEmpty">ยังไม่มี Fleet ที่ถูกลบ</span>`}</div></div>`;
+ else h+=`<div class="fnote">🔒 การลบ Fleet ทำได้เฉพาะผู้ใช้ที่มีสิทธิ์ (Owner) เท่านั้น</div>`;
+ box.innerHTML=h;
+}
+const BASE_GROUPS=JSON.parse(JSON.stringify(FLEET_GROUPS)),BASE_NONSCG=NON_SCG_FLEETS.slice();
+let deletedFleets=[];
+function syncFleets(){
+ Object.keys(FLEET_GROUPS).forEach(c=>{FLEET_GROUPS[c].length=0;FLEET_GROUPS[c].push(...BASE_GROUPS[c])});
+ NON_SCG_FLEETS.length=0;NON_SCG_FLEETS.push(...BASE_NONSCG);
+ customFleets.forEach(c=>{const t=c.cluster==="non SCG"?NON_SCG_FLEETS:FLEET_GROUPS[c.cluster];if(t&&!t.includes(c.name))t.push(c.name)});
+ const del=new Set(deletedFleets.map(d=>d.name));
+ Object.keys(FLEET_GROUPS).forEach(c=>{for(let i=FLEET_GROUPS[c].length-1;i>=0;i--)if(del.has(FLEET_GROUPS[c][i]))FLEET_GROUPS[c].splice(i,1)});
+ for(let i=NON_SCG_FLEETS.length-1;i>=0;i--)if(del.has(NON_SCG_FLEETS[i]))NON_SCG_FLEETS.splice(i,1);
+ FLEETS.length=0;FLEETS.push(...Object.values(FLEET_GROUPS).flat(),...NON_SCG_FLEETS);
+ CLUSTER_CHART_GROUPS[0].fleets=[...FLEET_GROUPS["Central Cluster (ภาคกลาง)"],...FLEET_GROUPS["West Cluster (ตะวันตก)"]];
+ rebuildFleetOptions();
+ if(typeof appliedFilters!=="undefined"&&appliedFilters){appliedFilters[2]=document.getElementById("viewFleet").value;updateFilterDirty()}
+ renderUsers();renderFleetList();render();renderMatrix();
+}
+function initCustomFleets(){
+ const sel=document.getElementById("newFleetCluster");
+ if(sel)sel.innerHTML=Object.keys(FLEET_GROUPS).map(c=>`<option value="${c}">${c}</option>`).join("")+`<option value="non SCG">non SCG (ลูกค้านอก SCG)</option>`;
+ try{customFleets=(JSON.parse(localStorage.getItem(CUSTOM_FLEET_KEY)||"[]")||[]).filter(validFleetRec)}catch(e){customFleets=[]}
+ syncFleets();
+ if(fleetRef)fleetRef.on("value",snap=>{
+  const remote=Object.values(snap.val()||{}).filter(validFleetRec),have=new Set(customFleets.map(c=>c.name)),rn=new Set(remote.map(c=>c.name));
+  remote.forEach(c=>{if(!have.has(c.name)){customFleets.push(c);have.add(c.name)}});
+  customFleets.forEach(c=>{if(!rn.has(c.name))fleetRef.child(fleetFbKey(c.name)).set(c).catch(()=>{})});
+  try{localStorage.setItem(CUSTOM_FLEET_KEY,JSON.stringify(customFleets))}catch(e){}
+  syncFleets();
+ },err=>console.error("โหลดรายชื่อ Fleet ไม่สำเร็จ:",err));
+}
+async function addFleet(){
+ const nameEl=document.getElementById("newFleetName"),clEl=document.getElementById("newFleetCluster"),st=document.getElementById("fleetAddStatus");
+ const name=(nameEl.value||"").trim().replace(/\s+/g," "),cluster=clEl.value,bad=t=>{st.style.color="#c42632";st.textContent=t};
+ if(!name)return bad("กรุณาใส่ชื่อ Fleet");
+ if(/[.#$\[\]\/]/.test(name))return bad("ชื่อ Fleet ห้ามมีอักขระ . # $ [ ] /");
+ if(FLEETS.some(f=>f.toLowerCase()===name.toLowerCase()))return bad(`มี Fleet ชื่อ "${name}" อยู่แล้ว`);
+ const rec={name,cluster,added:new Date().toISOString()};let remoteOk=true;
+ if(fleetRef){try{await fleetRef.child(fleetFbKey(name)).set(rec)}catch(e){remoteOk=false;console.error("เพิ่ม Fleet ไม่สำเร็จ:",e)}}
+ if(!customFleets.some(c=>c.name===name))customFleets.push(rec);
+ try{localStorage.setItem(CUSTOM_FLEET_KEY,JSON.stringify(customFleets))}catch(e){}
+ nameEl.value="";syncFleets();
+ st.style.color=remoteOk?"#087b42":"#b86e00";
+ st.textContent=remoteOk?`เพิ่ม Fleet "${name}" แล้ว ผู้ใช้คนอื่นจะเห็นทันที`:`เพิ่ม "${name}" ในเครื่องนี้แล้ว แต่บันทึกขึ้นระบบกลางไม่สำเร็จ (ตรวจสิทธิ์ Firebase)`;
+}
+function initSidebar(){
+ const sd=document.querySelector(".side");if(!sd)return;
+ if(window.matchMedia&&window.matchMedia("(hover:none)").matches){
+  sd.addEventListener("click",()=>sd.classList.toggle("open"));
+  document.addEventListener("click",e=>{if(!sd.contains(e.target))sd.classList.remove("open")});
+ }
+}
+/* ===== ลบ / กู้คืน Fleet (เฉพาะ Owner) — ซ่อน Fleet ออกจากระบบ ข้อมูลย้อนหลังไม่ถูกลบ ===== */
+const DELETED_FLEET_KEY="daily_transport_report_deleted_fleets";
+const deletedRef=firebaseApp?window.firebase.database().ref("daily_transport_fleets_deleted"):null;
+function saveDeletedLocal(){try{localStorage.setItem(DELETED_FLEET_KEY,JSON.stringify(deletedFleets))}catch(e){}}
+function fleetMsg(t,color){const st=document.getElementById("fleetAddStatus");if(st){st.style.color=color;st.textContent=t}}
+async function deleteFleet(name){
+ if(!canDeleteFleet()){alert("เฉพาะผู้ใช้ที่มีสิทธิ์ (Owner) เท่านั้นที่ลบ Fleet ได้");return}
+ if(!FLEETS.includes(name))return;
+ if(!confirm(`ลบ Fleet "${name}" ออกจากระบบ?\n\n• Fleet นี้จะหายจากตัวกรอง กราฟ ตาราง และ Export\n• ข้อมูลย้อนหลังใน Database ไม่ถูกลบ และกู้คืน Fleet ได้ภายหลัง`))return;
+ const rec={name,at:new Date().toISOString(),by:LOGIN_OWNER_USER};let ok=true;
+ if(deletedRef){try{await deletedRef.child(fleetFbKey(name)).set(rec)}catch(e){ok=false;console.error("ลบ Fleet ไม่สำเร็จ:",e)}}
+ if(!deletedFleets.some(d=>d.name===name))deletedFleets.push(rec);
+ saveDeletedLocal();syncFleets();
+ fleetMsg(ok?`ลบ Fleet "${name}" แล้ว (กู้คืนได้ในรายการ Fleet ที่ลบแล้ว)`:`ลบ "${name}" ในเครื่องนี้แล้ว แต่บันทึกขึ้นระบบกลางไม่สำเร็จ (ตรวจสอบสิทธิ์ Firebase)`,ok?"#087b42":"#b86e00");
+}
+async function restoreFleet(name){
+ if(!canDeleteFleet()){alert("เฉพาะผู้ใช้ที่มีสิทธิ์ (Owner) เท่านั้น");return}
+ let ok=true;
+ if(deletedRef){try{await deletedRef.child(fleetFbKey(name)).remove()}catch(e){ok=false;console.error("กู้คืน Fleet ไม่สำเร็จ:",e)}}
+ deletedFleets=deletedFleets.filter(d=>d.name!==name);
+ saveDeletedLocal();syncFleets();
+ fleetMsg(ok?`กู้คืน Fleet "${name}" แล้ว`:`กู้คืน "${name}" ในเครื่องนี้แล้ว แต่บันทึกขึ้นระบบกลางไม่สำเร็จ`,ok?"#087b42":"#b86e00");
+}
+function initDeletedFleets(){
+ try{deletedFleets=(JSON.parse(localStorage.getItem(DELETED_FLEET_KEY)||"[]")||[]).filter(d=>d&&d.name)}catch(e){deletedFleets=[]}
+ if(deletedRef)deletedRef.on("value",snap=>{deletedFleets=Object.values(snap.val()||{}).filter(d=>d&&d.name);saveDeletedLocal();syncFleets()},err=>console.error("โหลดรายการ Fleet ที่ลบไม่สำเร็จ:",err));
+}
+/* ===== Animation: เปิดช่วงสั้น ๆ ตอนโหลด / กดดูข้อมูล / สลับมุมมอง ===== */
+let animTimer=null;
+function chartAnimWindow(ms){document.body.classList.add("chartAnim");clearTimeout(animTimer);animTimer=setTimeout(()=>document.body.classList.remove("chartAnim"),ms||1800)}
+function tagChartAnim(){
+ document.querySelectorAll(".chart").forEach(c=>Array.from(c.children).forEach((el,i)=>el.style.setProperty("--i",i)));
+ document.querySelectorAll(".aiChart svg").forEach(svg=>{svg.querySelectorAll(".aiHb").forEach((el,i)=>el.style.setProperty("--i",Math.floor(i/2)));svg.querySelectorAll(".aiHbl").forEach((el,i)=>el.style.setProperty("--i",Math.floor(i/2)))});
+}
+/* ===== ตัวกรอง Dashboard (Year / Month / Fleet / Customer): เลือกแล้วยังไม่เปลี่ยนข้อมูล ต้องกด "ดูข้อมูล" ===== */
+const FILTER_IDS=["year","month","viewFleet","customerFilter"];
+let appliedFilters=null,filtersDirty=false;
+function filterValues(){return FILTER_IDS.map(id=>document.getElementById(id).value)}
+function updateFilterDirty(){
+ filtersDirty=!!appliedFilters&&filterValues().some((v,i)=>v!==appliedFilters[i]);
+ const b=document.getElementById("refreshBtn"),h=document.getElementById("filterHint");
+ if(b)b.classList.toggle("needApply",filtersDirty);
+ if(h)h.textContent=filtersDirty?"เปลี่ยนตัวกรองแล้ว กด “ดูข้อมูล” เพื่อแสดงผล":"";
+}
+function applyFiltersNow(){appliedFilters=filterValues();updateFilterDirty();syncInputPeriod()}
+const _renderOrig=render;
+render=function(){
+ if(filtersDirty&&appliedFilters){
+  const cur=filterValues();
+  FILTER_IDS.forEach((id,i)=>{document.getElementById(id).value=appliedFilters[i]});
+  try{_renderOrig()}finally{FILTER_IDS.forEach((id,i)=>{document.getElementById(id).value=cur[i]})}
+ }else _renderOrig();
+ tagChartAnim();
+};
+chartAnimWindow(3500);
+checkLogin();
+setup();
+FILTER_IDS.forEach(id=>{document.getElementById(id).onchange=updateFilterDirty});
+applyFiltersNow();
+initDeletedFleets();initCustomFleets();initSidebar();
+</script>
+</body>
+</html>
